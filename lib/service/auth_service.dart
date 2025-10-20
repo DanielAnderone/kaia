@@ -42,7 +42,7 @@ class AuthService {
     required String password,
     String? status, // ativo, inativo ou omitido
   }) async {
-    final uri = Uri.parse('$baseUrl/api/v1/auth/register');
+    final uri = Uri.parse('$baseUrl/u/login');
     final payload = {
       "username": username.trim(),
       "email": email.trim(),

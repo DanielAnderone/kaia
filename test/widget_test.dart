@@ -6,23 +6,19 @@ void main() {
   testWidgets('Login screen renders correctly with button and fields', (tester) async {
     await tester.pumpWidget(const MyApp());
 
-    // Verifica se a tela carrega
+    // Elementos base
     expect(find.text('LOGIN'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Username'), findsOneWidget);
     expect(find.widgetWithText(TextFormField, 'Password'), findsOneWidget);
-
-    // Botão LOGIN existe
-    final loginButton = find.widgetWithText(ElevatedButton, 'LOGIN');
-    expect(loginButton, findsOneWidget);
-
-    // Verifica cores aproximadas: botão cinza claro
-    final ElevatedButton buttonWidget = tester.widget<ElevatedButton>(loginButton);
-    final ButtonStyle style = buttonWidget.style!;
-    final Color? bg = style.backgroundColor?.resolve({});
-    expect(bg, const Color(0xFFD9D9D9)); // botão cinza claro
-
-    // Textos adicionais
     expect(find.text('Forgot your password ?'), findsOneWidget);
     expect(find.text('SIGN UP'), findsOneWidget);
+
+    // Botão LOGIN e cor verde
+    final loginButton = find.widgetWithText(ElevatedButton, 'LOGIN');
+    expect(loginButton, findsOneWidget);
+    final ElevatedButton btn = tester.widget(loginButton);
+    final ButtonStyle style = btn.style!;
+    final Color? bg = style.backgroundColor?.resolve({});
+    expect(bg, const Color(0xFF22C55E)); // verde correto
   });
 }

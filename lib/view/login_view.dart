@@ -10,7 +10,7 @@ class LoginView extends StatefulWidget {
   final Color buttonColor;
   const LoginView({
     super.key,
-    required this.apiBaseUrl,
+    this.apiBaseUrl = 'https://kaia.loophole.site', // URL base padrão
     this.logo,
     this.buttonColor = const Color(0xFF22C55E),
   });
@@ -29,6 +29,7 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
+    // Injeção do AuthService com a base definida
     vm = LoginViewModel(AuthService(baseUrl: widget.apiBaseUrl));
     vm.addListener(() {
       if (mounted) setState(() {});
@@ -45,7 +46,7 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _submit() async {
     if (!(_form.currentState?.validate() ?? false)) return;
-    final ok = await vm.login(_email.text, _pass.text);
+    final ok = await vm.login(_email.text.trim(), _pass.text);
     if (ok && mounted) Navigator.pushReplacementNamed(context, '/home');
   }
 
@@ -102,7 +103,6 @@ class _LoginViewState extends State<LoginView> {
 
                 const SizedBox(height: 24),
 
-                // FORM
                 SizedBox(
                   width: 320,
                   child: Form(
@@ -115,8 +115,7 @@ class _LoginViewState extends State<LoginView> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           style: const TextStyle(color: black),
-                          decoration:
-                              _underline('Username', Icons.person_outline),
+                          decoration: _underline('Username', Icons.person_outline),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
                               return 'Informe o email';
@@ -132,19 +131,14 @@ class _LoginViewState extends State<LoginView> {
                           obscureText: _obscure,
                           textInputAction: TextInputAction.done,
                           style: const TextStyle(color: black),
-                          decoration:
-                              _underline('Password', Icons.lock_outline)
-                                  .copyWith(
+                          decoration: _underline('Password', Icons.lock_outline).copyWith(
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscure
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
+                                _obscure ? Icons.visibility : Icons.visibility_off,
                                 color: black,
                                 size: 18,
                               ),
-                              onPressed: () =>
-                                  setState(() => _obscure = !_obscure),
+                              onPressed: () => setState(() => _obscure = !_obscure),
                             ),
                           ),
                           validator: (v) =>
@@ -155,12 +149,8 @@ class _LoginViewState extends State<LoginView> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/forgot'),
-                            child: const Text(
-                              'Forgot your password ?',
-                              style: TextStyle(color: black),
-                            ),
+                            onPressed: () => Navigator.pushNamed(context, '/forgot'),
+                            child: const Text('Forgot your password ?', style: TextStyle(color: black)),
                           ),
                         ),
 
@@ -171,46 +161,32 @@ class _LoginViewState extends State<LoginView> {
                           style: _greenButton(),
                           child: vm.loading
                               ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
+                                  width: 22, height: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 )
-                              : const Text(
-                                  'LOGIN',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
+                              : const Text('LOGIN', style: TextStyle(fontWeight: FontWeight.w700)),
                         ),
 
                         const SizedBox(height: 8),
 
-                        // SIGN UP COM ANIMAÇÃO
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
                               Navigator.of(context).push(
                                 PageRouteBuilder(
-                                  transitionDuration:
-                                      const Duration(milliseconds: 400),
+                                  transitionDuration: const Duration(milliseconds: 400),
                                   pageBuilder: (_, __, ___) => SignUpView(
-                                    apiBaseUrl: widget.apiBaseUrl,
+                                    apiBaseUrl: widget.apiBaseUrl, // reaproveita a mesma base
                                     buttonColor: widget.buttonColor,
                                   ),
-                                  transitionsBuilder:
-                                      (_, animation, __, child) {
+                                  transitionsBuilder: (_, animation, __, child) {
                                     const begin = Offset(0.0, 1.0);
                                     const end = Offset.zero;
                                     const curve = Curves.easeOutCubic;
-                                    final tween = Tween(
-                                            begin: begin, end: end)
+                                    final tween = Tween(begin: begin, end: end)
                                         .chain(CurveTween(curve: curve));
-                                    return SlideTransition(
-                                      position: animation.drive(tween),
-                                      child: child,
-                                    );
+                                    return SlideTransition(position: animation.drive(tween), child: child);
                                   },
                                 ),
                               );
@@ -228,11 +204,7 @@ class _LoginViewState extends State<LoginView> {
 
                         if (vm.error != null) ...[
                           const SizedBox(height: 10),
-                          Text(
-                            vm.error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
-                          ),
+                          Text(vm.error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
                         ],
                       ],
                     ),

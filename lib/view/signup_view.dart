@@ -8,7 +8,7 @@ class SignUpView extends StatefulWidget {
   final Color buttonColor;
   const SignUpView({
     super.key,
-    required this.apiBaseUrl,
+    this.apiBaseUrl = 'https://kaia.loophole.site', // URL base definida aqui
     this.buttonColor = const Color(0xFF22C55E),
   });
 
@@ -61,14 +61,22 @@ class _SignUpViewState extends State<SignUpView> {
       username: _nome.text,
       email: _email.text,
       password: _senha.text,
-      // status: 'active', // opcional (envie 'inactive' se quiser criar bloqueado)
+      // status: 'active',
     );
 
     if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Conta criada com sucesso!')),
       );
-      Navigator.pushReplacementNamed(context, '/');
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/',
+        (route) => false,
+        arguments: {
+          'fromSignup': true,
+          'prefillEmail': _email.text,
+        },
+      );
     }
   }
 
@@ -187,9 +195,7 @@ class _SignUpViewState extends State<SignUpView> {
                               onPressed: () => setState(() => _obscure2 = !_obscure2),
                             ),
                           ),
-                          validator: (v) => (v == null || v.isEmpty)
-                              ? 'Confirme a senha'
-                              : null,
+                          validator: (v) => (v == null || v.isEmpty) ? 'Confirme a senha' : null,
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton(
@@ -213,7 +219,14 @@ class _SignUpViewState extends State<SignUpView> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () => Navigator.pushReplacementNamed(context, '/'),
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                                arguments: {'prefillEmail': _email.text},
+                              );
+                            },
                             child: Text(
                               'Já tem conta? Entrar',
                               style: TextStyle(
