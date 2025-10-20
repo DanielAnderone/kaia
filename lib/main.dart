@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './view/login_view.dart';
+import './view/new_project_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
         '/home': (_) => const _Home(),
         '/forgot': (_) => const _Forgot(),
         '/signup': (_) => const _Signup(), // adicionada
+        '/projectmanagement': () => const ProjectManagementPage(),
       },
       initialRoute: '/',
     );
