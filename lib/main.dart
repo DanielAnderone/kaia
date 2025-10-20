@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import './view/login_view.dart';
-import './view/new_project_view.dart';
+import './view/project_view.dart'; // contém ProjectManagementPage
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -14,22 +11,15 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Kaia',
       debugShowCheckedModeBanner: false,
-      routes: {
-        '/': (_) => const LoginView(apiBaseUrl: 'http://localhost:8080'),
-        '/signup': (_) => const SignUpView(apiBaseUrl:'https://kaia.loophole.site'),
-        '/projects': (_) => const ProjectsView(),
-        '/forgot': (_) => const _Forgot(),
-        '/signup': (_) => const _Signup(), // adicionada
-        '/projectmanagement': () => const ProjectManagementPage(),
-      },
-      initialRoute: '/',
+      // Opção A: usar home
+      home: const ProjectsView(),
+
+      // Opção B: usar rotas (comente a linha "home" acima se preferir rotas)
+      // routes: {
+      //   '/': (_) => const ProjectManagementPage(),
+      //   '/projects': (_) => const ProjectManagementPage(),
+      // },
+      // initialRoute: '/', // só se usar rotas
     );
   }
-}
-
-class _Forgot extends StatelessWidget {
-  const _Forgot();
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Recuperar Senha')));
 }

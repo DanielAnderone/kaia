@@ -1,10 +1,13 @@
 // lib/view/projects_view.dart
 import 'package:flutter/material.dart';
+import '../model/project.dart';
+import 'projectsdetail.dart';
+import '../widgts/netimage.dart';
+import 'investmentview.dart';
 
 class ProjectsView extends StatelessWidget {
   const ProjectsView({super.key});
 
-  // Paleta do HTML
   static const Color primary = Color(0xFF169C1D);
   static const Color bgLight = Color(0xFFF6F8F6);
   static const Color bgDark = Color(0xFF112112);
@@ -12,66 +15,124 @@ class ProjectsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    final width = MediaQuery.of(context).size.width;
+
+    final statCols = (width ~/ 150).clamp(2, 3);
+    final projCols = (width ~/ 180).clamp(2, 3);
+
+    // Mock alinhado ao backend
+    final projetos = <Project>[
+      Project(
+        id: 1,
+        ownerId: 10,
+        name: 'Fazenda Hen Haven',
+        description: 'Expansão de aviários com eficiência energética.',
+        startDate: DateTime(2025, 1, 10),
+        endDate: DateTime(2025, 11, 10),
+        totalProfit: 3200,
+        profitabilityPercent: 25,
+        minimumInvestment: 10000,
+        riskLevel: 'medio',
+        status: 'Ativo',
+        investmentAchieved: 6200,
+        imageUrl: 'https://picsum.photos/seed/henhaven/1200/800',
+      ),
+      Project(
+        id: 2,
+        ownerId: 11,
+        name: 'Sunrise Poultry',
+        description: 'Lote concluído. Próxima fase com certificações.',
+        startDate: DateTime(2024, 3, 1),
+        endDate: DateTime(2024, 11, 1),
+        totalProfit: 2900,
+        profitabilityPercent: 18,
+        minimumInvestment: 15000,
+        riskLevel: 'baixo',
+        status: 'Financiado',
+        investmentAchieved: 15000,
+        imageUrl: 'https://picsum.photos/seed/sunrise/1200/800',
+      ),
+      Project(
+        id: 3,
+        ownerId: 12,
+        name: 'Golden Egg Farms',
+        description: 'Automação de coleta e cadeia fria.',
+        startDate: DateTime(2025, 2, 1),
+        endDate: DateTime(2026, 2, 1),
+        totalProfit: 0,
+        profitabilityPercent: 22,
+        minimumInvestment: 20000,
+        riskLevel: 'alto',
+        status: 'Ativo',
+        investmentAchieved: 9800,
+        imageUrl: 'https://picsum.photos/seed/golden/1200/800',
+      ),
+    ];
+
+    final ativos = projetos.where((p) => p.status == 'Ativo').length;
+    final total = projetos.length;
 
     return Scaffold(
       backgroundColor: isDark ? bgDark : bgLight,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Top App Bar
-            Container(
-              color: isDark ? bgDark : bgLight,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                children: [
-                  const _Avatar(
-                    url:
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuA3447MeD5msMbR_Bt3JCxz0LmKOi0JIWZwYFr1zKUCDnq1i6l8lvDtkFpwKZHa22Sfsu3JSC9RKA0vDh3z3ECVQHnoOBZiBcvnLwgTmwV2ZJJvKF7Pz5uhcSS93Qxfv7KnFEv6v0AeakP0kC-oq7T3yUhbuN86ktiuKGqn7iDDJ6ilbwanQRYrcksxy7-_KsqMlsv2xWGszKhqBXCBd6M8Gl0fNhTyP3CSnmyRdHsb0w8cZAqNtnTSk94BYoBSkN2AxxHMZbT_QXYa',
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Hello, Alex!',
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.15,
+        child: CustomScrollView(
+          slivers: [
+            // App bar
+            SliverToBoxAdapter(
+              child: Container(
+                color: isDark ? bgDark : bgLight,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(
+                  children: [
+                    const _Avatar(url: 'https://picsum.photos/seed/avatar/80/80'),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Olá',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.15,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.notifications,
-                        color: isDark ? Colors.white : Colors.black87),
-                    onPressed: () {},
-                  ),
-                ],
+                    IconButton(
+                      icon: Icon(Icons.notifications, color: isDark ? Colors.white : Colors.black87),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 20),
 
-            // Stats
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: const [
-                  _StatCard(title: 'Total Invested', value: '\$25,000'),
-                  SizedBox(width: 12),
-                  _StatCard(title: 'Accumulated Profit', value: '\$5,000'),
-                  SizedBox(width: 12),
-                  _StatCard(title: 'Average Return', value: '20%'),
-                ],
+            // Métricas topo
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              sliver: SliverGrid(
+                delegate: SliverChildListDelegate.fixed([
+                  _StatCard(title: 'Projetos Ativos', value: '$ativos'),
+                  _StatCard(title: 'Total Projetos', value: '$total'),
+                  _StatCard(
+                    title: 'Invest. Total (mock)',
+                    value: _mt(projetos.fold<num>(0, (a, b) => a + b.investmentAchieved)),
+                  ),
+                ]),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: statCols,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 84,
+                ),
               ),
             ),
-            const SizedBox(height: 20),
 
-            // Section header
-            Align(
-              alignment: Alignment.centerLeft,
+            // Título
+            SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Text(
-                  'Active Projects',
+                  'Projetos',
                   style: TextStyle(
                     color: isDark ? Colors.white : Colors.black87,
                     fontSize: 22,
@@ -82,47 +143,32 @@ class ProjectsView extends StatelessWidget {
               ),
             ),
 
-            // Carousel
-            SizedBox(
-              height: 260,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: const [
-                  _ProjectCard(
-                    title: 'Hen Haven Farm',
-                    cost: 10000,
-                    expectedReturnPct: 25,
-                    statusText: 'Active',
-                    statusColor: primary,
-                    imageUrl:
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuACgrnBHW9MfWFTbMPdtLMGX8ZnXVB7YjYsJQjUM72b_YflyZDYCkjHTZ4x9zMewBPde1gSxIb9P93BiIF9bkz87z3Ab5N_jmbaZcx3lQBvXm_y-Qc6oFWVqPAu0lz_qlkqXqjWgrmxEemwFQDkASiLQMYOcrlhTrtU8L2cAkKRlWoOCEFxIlM3t1kvOkrOTsDChJE5ch1aRixzuqofMa7mbNmpqafZVNggE7oPba4kgRjCu8vQU9vWeo0_CwEUM0TABQLdsXtGTaN3',
-                  ),
-                  SizedBox(width: 12),
-                  _ProjectCard(
-                    title: 'Sunrise Poultry',
-                    cost: 15000,
-                    expectedReturnPct: 18,
-                    statusText: 'Funded',
-                    statusColor: Color(0xFFF59E0B), // amarelo
-                    imageUrl:
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuAuOqE5s1bfq_t3Q-_yz6DV6XBZHdKauMZkg-mrwSLcXh7LRmOY65D8YJ1T73b3eHGwBqJY0phYExUmGBjLxYbWAC-N2NpU8K-TqBA5AIZx5o3wxBx6lk4b91ZDxZApuXIQ7nknCbkXG-tg4JJXmiF1en5GCNhRV0axciL4ZiHtADemkF6Ai_vnbf6DqkTwzdH-cK4oM5FZxBlbarFsbLtYDfoZ_Zj22A42_e7wIqoyNccMNtCZd1ZNZR6M-Z94e0TaDvoCX3rGBpe5',
-                  ),
-                  SizedBox(width: 12),
-                  _ProjectCard(
-                    title: 'Golden Egg Farms',
-                    cost: 20000,
-                    expectedReturnPct: 22,
-                    statusText: 'Active',
-                    statusColor: primary,
-                    imageUrl:
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuCqysmCTOmz2y2jA9TxyCNnAbtgjNIKHoHLWiloBj7uoqWH49jUN0np6_BcuSN2ZDdNFySDVH6b-Mu3AyiLLzDJxKykuQGMqXOauMR0u0Bp6-Y0U1hkkeDd2vcj0iLnjmyRYSJpI_aCu2yWf-jS-l75vUUVUKvMUzw86OQB7dhQP945c_ubwpeLpIEyAnKpfiU_Pzu91Gpdclgda7M7BZKoXxbLIa-6Jd8Qqy-dYqwRloQyg9LC1B5hUusnnM6BaxJ_3d1wIL4y-8To',
-                  ),
-                ],
+            // Grid de projetos
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverGrid(
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) {
+                    final p = projetos[i];
+                    return _ProjectCard(
+                      project: p,
+                      onOpen: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => ProjectDetailsView(project: p)),
+                      ),
+                    );
+                  },
+                  childCount: projetos.length,
+                ),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: projCols,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.68,
+                ),
               ),
             ),
-
-            const Spacer(), // reserva espaço para o bottom nav
+            const SliverToBoxAdapter(child: SizedBox(height: 64)),
           ],
         ),
       ),
@@ -133,21 +179,47 @@ class ProjectsView extends StatelessWidget {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1F2937) : Colors.white,
           border: Border(
-            top: BorderSide(
-              color: isDark ? const Color(0xFF374151) : const Color(0xFFD1D5DB),
-            ),
+            top: BorderSide(color: isDark ? const Color(0xFF374151) : const Color(0xFFD1D5DB)),
           ),
         ),
         child: Row(
-          children: const [
-            _NavItem(label: 'Dashboard', icon: Icons.space_dashboard, selected: true),
-            _NavItem(label: 'Projects', icon: Icons.business_center),
-            _NavItem(label: 'Portfolio', icon: Icons.pie_chart),
-            _NavItem(label: 'Profile', icon: Icons.person),
+          children: [
+            const _NavItem(label: 'Início', icon: Icons.space_dashboard, selected: true),
+            const _NavItem(label: 'Projetos', icon: Icons.business_center),
+            _NavItem(
+              label: 'Investimentos',
+              icon: Icons.pie_chart,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MyInvestmentsView(
+                      investments: [], // preencha com dados do backend
+                    ),
+                  ),
+                );
+              },
+            ),
+            const _NavItem(label: 'Perfil', icon: Icons.person),
           ],
         ),
       ),
     );
+  }
+
+  static String _mt(num v) {
+    final s = v.toInt().toString();
+    final b = StringBuffer();
+    var c = 0;
+    for (var i = s.length - 1; i >= 0; i--) {
+      b.write(s[i]);
+      c++;
+      if (c == 3 && i != 0) {
+        b.write('.');
+        c = 0;
+      }
+    }
+    return 'MT ${b.toString().split('').reversed.join()}';
   }
 }
 
@@ -158,9 +230,9 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipOval(
-      child: Image.network(url, width: 40, height: 40, fit: BoxFit.cover),
+      child: NetImage(url, width: 40, height: 40, fit: BoxFit.cover),
     );
-  }
+    }
 }
 
 class _StatCard extends StatelessWidget {
@@ -171,37 +243,49 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2D3748) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
+    return Container(
+      constraints: const BoxConstraints(minHeight: 84),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2D3748) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
+      ),
+      child: FittedBox(
+        alignment: Alignment.centerLeft,
+        fit: BoxFit.scaleDown,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: TextStyle(
-                  color: isDark ? Colors.grey[300] : Colors.grey[600],
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                )),
-            const SizedBox(height: 4),
-            Text(value,
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                )),
+            Text(
+              title,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark ? Colors.grey[300] : Colors.grey[600],
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -210,29 +294,18 @@ class _StatCard extends StatelessWidget {
 }
 
 class _ProjectCard extends StatelessWidget {
-  final String title;
-  final int cost;
-  final int expectedReturnPct;
-  final String statusText;
-  final Color statusColor;
-  final String imageUrl;
+  final Project project;
+  final VoidCallback onOpen;
 
-  const _ProjectCard({
-    required this.title,
-    required this.cost,
-    required this.expectedReturnPct,
-    required this.statusText,
-    required this.statusColor,
-    required this.imageUrl,
-  });
+  const _ProjectCard({required this.project, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+    const green = ProjectsView.primary;
+    const black = Colors.black87;
 
     return Container(
-      width: 288,
-      margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2D3748) : Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -240,8 +313,8 @@ class _ProjectCard extends StatelessWidget {
           if (!isDark)
             BoxShadow(
               color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
         ],
       ),
@@ -250,58 +323,46 @@ class _ProjectCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.network(imageUrl, fit: BoxFit.cover),
+              aspectRatio: 16 / 10,
+              child: NetImage(project.imageUrl ?? ''),
             ),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      )),
-                  const SizedBox(height: 6),
                   Text(
-                    'Cost: \$${_fmt(cost)}  Expected Return: $expectedReturnPct% \nStatus: ',
-                    style: TextStyle(
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    project.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: black,
                       fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Text(
-                    statusText,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
+                  const SizedBox(height: 4),
+                  _Line(label: 'Mín. investimento', value: _fmtMt(project.minimumInvestment)),
+                  _Line(label: 'Rentabilidade', value: '${project.profitabilityPercent.toStringAsFixed(0)}%'),
+                  _Line(label: 'Estado', value: project.status),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
-                    height: 40,
+                    height: 34,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: onOpen,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: ProjectsView.primary,
+                        backgroundColor: green,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                       ),
-                      child: const Text(
-                        'View Details',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child: const Text('Ver detalhes'),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -311,15 +372,38 @@ class _ProjectCard extends StatelessWidget {
     );
   }
 
-  String _fmt(int v) {
-    final s = v.toString();
+  static String _fmtMt(num v) {
+    final s = v.toInt().toString();
     final b = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      final idx = s.length - i;
+    var c = 0;
+    for (var i = s.length - 1; i >= 0; i--) {
       b.write(s[i]);
-      if (idx > 1 && idx % 3 == 1) b.write(',');
+      c++;
+      if (c == 3 && i != 0) {
+        b.write('.');
+        c = 0;
+      }
     }
-    return b.toString();
+    return 'MT ${b.toString().split('').reversed.join()}';
+  }
+}
+
+class _Line extends StatelessWidget {
+  final String label;
+  final String value;
+  const _Line({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Text(
+        '$label: $value',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: Colors.black87, fontSize: 11.5),
+      ),
+    );
   }
 }
 
@@ -328,6 +412,7 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final bool selected;
   final VoidCallback? onTap;
+
   const _NavItem({
     required this.label,
     required this.icon,
