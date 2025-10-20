@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import './view/login_view.dart';
-import './view/signup_view.dart';
-import './view/project_view.dart'; // tela de projetos
+import './view/new_project_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -20,6 +19,8 @@ class MyApp extends StatelessWidget {
         '/signup': (_) => const SignUpView(apiBaseUrl:'https://kaia.loophole.site'),
         '/projects': (_) => const ProjectsView(),
         '/forgot': (_) => const _Forgot(),
+        '/signup': (_) => const _Signup(), // adicionada
+        '/projectmanagement': () => const ProjectManagementPage(),
       },
       initialRoute: '/',
     );
