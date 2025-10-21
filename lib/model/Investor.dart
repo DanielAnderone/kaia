@@ -1,17 +1,15 @@
-// lib/model/investor.dart
 class Investor {
   final int? id;
-  final int userId;           // id do usuário autenticado
+  final int userId;
   final String name;
   final String phone;
   final DateTime bornDate;
-  final String identityCard;  // BI/Doc
+  final String identityCard;
   final String nuit;
-
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  Investor({
+  const Investor({
     this.id,
     required this.userId,
     required this.name,
@@ -36,11 +34,10 @@ class Investor {
       );
 
   Map<String, dynamic> toJson() => {
-        if (id != null) 'id': id,
         'user_id': userId,
         'name': name,
         'phone': phone,
-        'born_date': bornDate.toIso8601String(),
+        'born_date': bornDate.toUtc().toIso8601String(),
         'identity_card': identityCard,
         'nuit': nuit,
       };

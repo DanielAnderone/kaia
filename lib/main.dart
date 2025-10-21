@@ -1,25 +1,47 @@
 import 'package:flutter/material.dart';
-import './view/project_view.dart'; // contém ProjectManagementPage
+import './view/login_view.dart';
+import './view/signup_view.dart';
+import 'view/project_view.dart';
+import 'view/paymentView.dart';
+import 'view/transactions_view.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(const KaiaApp());
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KaiaApp extends StatelessWidget {
+  const KaiaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Kaia',
       debugShowCheckedModeBanner: false,
-      // Opção A: usar home
-      home: const ProjectsView(),
+      theme: ThemeData(useMaterial3: true),
 
-      // Opção B: usar rotas (comente a linha "home" acima se preferir rotas)
-      // routes: {
-      //   '/': (_) => const ProjectManagementPage(),
-      //   '/projects': (_) => const ProjectManagementPage(),
-      // },
-      // initialRoute: '/', // só se usar rotas
+      // Login primeiro
+      initialRoute: '/',
+
+      routes: {
+        '/': (_) => const LoginView(),              // tela de login
+        '/signup': (_) => const SignUpView(),       // opcional se quiser via rota
+        '/projects': (_) => const ProjectsView(),   // home após login
+        '/pagamentos': (_) => const PaymentView(),
+        '/transacao': (_) => const TransactionsView(),
+        // stub opcional para evitar erro no botão "Forgot"
+        '/forgot': (_) => const Scaffold(
+              body: Center(child: Text('Recuperar senha (em breve)')),
+            ),
+      },
+
+      onUnknownRoute: (settings) => MaterialPageRoute(
+        builder: (_) => const Scaffold(
+          body: Center(
+            child: Text(
+              'Rota não encontrada.',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

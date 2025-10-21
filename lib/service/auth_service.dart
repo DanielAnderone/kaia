@@ -9,7 +9,7 @@ class AuthService {
 
   /// LOGIN
   Future<AuthResponse> login(AuthRequest req) async {
-    final uri = Uri.parse('$baseUrl/api/v1/auth/login');
+    final uri = Uri.parse('$baseUrl/u/login');
     final res = await http.post(
       uri,
       headers: {"Content-Type": "application/json"},

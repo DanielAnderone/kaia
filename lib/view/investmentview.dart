@@ -1,6 +1,7 @@
 // lib/view/my_investments_view.dart
 import 'package:flutter/material.dart';
 import '../model/investment.dart';
+import '../widgts/app_bottom.dart'; // <- menu único
 
 class MyInvestmentsView extends StatefulWidget {
   final String Function(int projectId)? projectNameOf;
@@ -23,15 +24,22 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
   static const Color bgLight = Color(0xFFF6F8F6);
   static const Color bgDark = Color(0xFF112112);
 
+  late List<Investment> _items;
   _Filter _filter = _Filter.active;
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _items = widget.investments.isNotEmpty ? widget.investments : _mock();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
 
-    final active = widget.investments.where((i) => i.isActive).toList();
-    final inactive = widget.investments.where((i) => !i.isActive).toList();
+    final active = _items.where((i) => i.isActive).toList();
+    final inactive = _items.where((i) => !i.isActive).toList();
     var list = _filter == _Filter.active ? active : inactive;
 
     String titleOf(Investment i) =>
@@ -65,7 +73,6 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         children: [
-          // Linha de busca + filtro verde à direita
           Row(
             children: [
               Expanded(
@@ -125,10 +132,7 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
-          // 3 cards em linha
           Row(
             children: [
               Expanded(child: _SummaryCard(title: 'Investimentos', value: '$totalCount')),
@@ -143,10 +147,7 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          // Lista “como na imagem”: cartões brancos, chip à direita, linhas investido/lucro/data
           if (list.isEmpty)
             _Empty(message: _filter == _Filter.active ? 'Sem investimentos ativos.' : 'Sem investimentos não ativos.')
           else
@@ -154,44 +155,124 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
               (i) => _InvestmentRow(
                 title: titleOf(i),
                 invested: i.investedAmount,
-                profitLabel: _filter == _Filter.active ? 'Profit:' : 'Profit:',
+                profitLabel: _filter == _Filter.active ? 'Estimado:' : 'Real:',
                 profitValue: _filter == _Filter.active ? i.estimatedProfit : i.actualProfit,
                 date: i.applicationDate,
                 statusChip: _filter == _Filter.active
                     ? _chip('Active', const Color(0xFFE8F8EE), primary)
                     : _chip('Completed', const Color(0xFFE9F0FF), const Color(0xFF3B82F6)),
-                onTap: _filter == _Filter.inactive ? () => _showInvested(context, i) : null,
+                // Popup em todos os itens
+                onTap: () => _showDetails(context, i, titleOf(i)),
               ),
             ),
         ],
       ),
+      bottomNavigationBar: const AppBottomNav(current: AppTab.investments),
     );
   }
 
-  static void _showInvested(BuildContext context, Investment i) {
-    showDialog(
+  // Popup de detalhes
+  void _showDetails(BuildContext context, Investment i, String title) {
+    final isActive = i.isActive;
+    final profitLabel = isActive ? 'Retorno estimado' : 'Retorno real';
+    final profitValue = isActive ? i.estimatedProfit : i.actualProfit;
+
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text('Valor investido', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_mt(i.investedAmount),
-                style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 8),
-            if ((i.note ?? '').isNotEmpty)
-              Text('Nota: ${i.note!}', style: const TextStyle(color: Colors.black54)),
-          ],
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(child: Container(width: 40, height: 5, decoration: BoxDecoration(color: const Color(0xFFD1D5DB), borderRadius: BorderRadius.circular(999)))),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black87),
+                      ),
+                    ),
+                    _chip(isActive ? 'Active' : 'Completed', isActive ? const Color(0xFFE8F8EE) : const Color(0xFFE9F0FF),
+                        isActive ? primary : const Color(0xFF3B82F6)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _kv('Investido', _mt(i.investedAmount)),
+                _kv(profitLabel, _mt(profitValue)),
+                _kv('Aplicado em', _fmtDate(i.applicationDate)),
+                if ((i.note ?? '').isNotEmpty) _kv('Nota', i.note!),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, color: primary),
+                          label: const Text('Fechar', style: TextStyle(color: primary, fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: primary),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar', style: TextStyle(color: Colors.black87))),
-        ],
       ),
     );
+  }
+
+  List<Investment> _mock() {
+    final now = DateTime.now();
+    return [
+      Investment(
+        id: 1,
+        projectId: 101,
+        investorId: 1,
+        investedAmount: 5000,
+        applicationDate: DateTime(now.year, 6, 15),
+        estimatedProfit: 1250,
+        actualProfit: 0,
+        note: 'Lote 12',
+        status: 'active',
+      ),
+      Investment(
+        id: 2,
+        projectId: 102,
+        investorId: 1,
+        investedAmount: 3000,
+        applicationDate: DateTime(now.year, 5, 20),
+        estimatedProfit: 750,
+        actualProfit: 0,
+        note: 'Lote 08',
+        status: 'active',
+      ),
+      Investment(
+        id: 3,
+        projectId: 103,
+        investorId: 1,
+        investedAmount: 10000,
+        applicationDate: DateTime(now.year, 4, 10),
+        estimatedProfit: 0,
+        actualProfit: 2800,
+        note: 'Lote 05',
+        status: 'completed',
+      ),
+    ];
   }
 
   static Widget _chip(String t, Color bg, Color fg) {
@@ -208,6 +289,20 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
     var c = 0;
     for (var i = s.length - 1; i >= 0; i--) { b.write(s[i]); c++; if (c == 3 && i != 0) { b.write('.'); c = 0; } }
     return 'MT ${b.toString().split('').reversed.join()}';
+  }
+
+  // linha K:V
+  Widget _kv(String k, String v) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Text(k, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+          Flexible(child: Text(v, textAlign: TextAlign.end)),
+        ]),
+      );
+
+  static String _fmtDate(DateTime d) {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${m[d.month - 1]} ${d.day}, ${d.year}';
   }
 }
 
@@ -275,26 +370,22 @@ class _InvestmentRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // título + chip à direita
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700)),
-                      ),
-                      statusChip,
-                    ],
-                  ),
+                  Row(children: [
+                    Expanded(
+                      child: Text(title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700)),
+                    ),
+                    statusChip,
+                  ]),
                   const SizedBox(height: 6),
                   Text('Invested: ${_MyInvestmentsViewState._mt(invested)}',
                       style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Text('$profitLabel ',
-                          style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                      Text('$profitLabel ', style: const TextStyle(color: Colors.black54, fontSize: 12)),
                       Text(_MyInvestmentsViewState._mt(profitValue),
                           style: const TextStyle(color: Color(0xFF169C1D), fontSize: 12, fontWeight: FontWeight.w700)),
                       const Text(' ↑', style: TextStyle(color: Color(0xFF169C1D), fontSize: 12)),
