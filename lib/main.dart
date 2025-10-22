@@ -1,49 +1,69 @@
 import 'package:flutter/material.dart';
-import './view/login_view.dart';
-import './view/new_project_view.dart';
+import 'package:provider/provider.dart';
+
+import 'view/admin_dashboard_view.dart';
+import 'view/investors_view.dart';
+import 'view/admin_project_management_view.dart';
+import 'view/investment_management_view.dart';
+import 'view/admin_profile_screen.dart';
+import 'view/admin_settings_view.dart';
+
+import 'viewmodel/investor_viewmodel.dart';
+import 'viewmodel/admin_settings_viewmodel.dart'; // Adicionado
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => InvestorViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => AdminSettingsViewModel()..loadSettings(),
+        ),
+      ],
+      child: const KaiaApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KaiaApp extends StatelessWidget {
+  const KaiaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final settingsViewModel = Provider.of<AdminSettingsViewModel>(context);
+    final isDark = settingsViewModel.settings?.theme == 'dark';
+
     return MaterialApp(
-      title: 'Kaia',
       debugShowCheckedModeBanner: false,
+      title: 'Kaia Invest',
+      theme: ThemeData(
+        primaryColor: const Color(0xFF386641),
+        scaffoldBackgroundColor: const Color(0xFFF9F9F9),
+        brightness: Brightness.light,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF386641),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      darkTheme: ThemeData(
+        primaryColor: const Color(0xFF386641),
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        brightness: Brightness.dark,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF1F1F1F),
+          foregroundColor: Colors.white,
+        ),
+      ),
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      initialRoute: '/dashboard',
       routes: {
-        '/': (_) => const LoginView(apiBaseUrl: 'http://localhost:8080'),
-        '/home': (_) => const _Home(),
-        '/forgot': (_) => const _Forgot(),
-        '/signup': (_) => const _Signup(), // adicionada
-        '/projectmanagement': () => const ProjectManagementPage(),
+        '/dashboard': (context) => const AdminDashboardView(),
+        '/investidores': (context) => const InvestorsView(),
+        '/adicionar-projeto': (context) => const AdminProjectManagementView(),
+        '/investiment': (context) => const InvestmentManagementView(),
+        '/admin-profile': (context) => const AdminProfileScreen(),
+        '/configuracoes': (context) => const AdminSettingsView(),
       },
-      initialRoute: '/',
     );
   }
-}
-
-// Telas simples para rotas
-class _Home extends StatelessWidget {
-  const _Home();
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Home')));
-}
-
-class _Forgot extends StatelessWidget {
-  const _Forgot();
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Recuperar Senha')));
-}
-
-class _Signup extends StatelessWidget {
-  const _Signup();
-  @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: Text('Criar Conta')));
 }
