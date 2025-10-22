@@ -6,7 +6,7 @@ class ProjectService {
   final Dio _dio = ApiClient.dio;
 
   Future<List<Project>> listProjects() async {
-    final r = await _dio.get('/projects');
+    final r = await _dio.get('/projects/');
     if (r.statusCode == 200 && r.data is List) {
       return (r.data as List)
           .map((e) => Project.fromJson(e as Map<String, dynamic>))

@@ -4,10 +4,10 @@ import '../model/investor.dart';
 
 class InvestorService {
   // Ajuste a base conforme o seu backend.
-  static const String _baseUrl = 'http://localhost:8080/api';
+  static const String _baseUrl = 'https://kaia.loophole.site';
 
   Future<Investor> createInvestor(Investor investor) async {
-    final uri = Uri.parse('$_baseUrl/investors');
+    final uri = Uri.parse('$_baseUrl/investors/');
     final res = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},

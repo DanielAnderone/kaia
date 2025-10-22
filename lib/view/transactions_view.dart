@@ -1,7 +1,7 @@
-// lib/view/transactions_view.dart
 import 'package:flutter/material.dart';
 import '../model/transaction.dart';
 import '../widgts/app_bottom.dart';
+import '../service/transaction_service.dart';
 
 class TransactionsView extends StatefulWidget {
   final List<Transaction> items;
@@ -14,48 +14,48 @@ class TransactionsView extends StatefulWidget {
 enum _TxFilter { all, pending, processing, approved, failed, refunded }
 
 class _TransactionsViewState extends State<TransactionsView> {
-  // Cores do app
   static const green = Color(0xFF169C1D);
   static const red = Color(0xFFE53935);
-  static const bgLight = Colors.white; // fundo branco
+  static const bgLight = Colors.white;
   static const bgDark = Color(0xFF101722);
 
   late List<Transaction> _all;
-
-  final Map<int, double> paymentAmounts = {
-    1: 150.00,
-    2: 75.50,
-    3: 2300.00,
-    4: 99.90,
-    5: 500.00
-  };
-  final Map<int, String> paymentCurrency = {
-    1: 'MT',
-    2: 'MT',
-    3: 'MT',
-    4: 'MT',
-    5: 'MT'
-  };
+  late final TransactionService _svc;
 
   _TxFilter _filter = _TxFilter.all;
   String _query = '';
   bool _loading = false;
-  int _seed = 0; // só para variar o mock no refresh
+  int _seed = 0; // só para variar o mock se cair em fallback
 
   @override
   void initState() {
     super.initState();
-    _all = widget.items.isNotEmpty ? widget.items : _mock();
+    _all = widget.items.isNotEmpty ? widget.items : [];
+    _svc = TransactionService(baseUrl: 'https://kaia.loophole.site', resourcePath: '/transactions');
+    _loadFromApi();
+  }
+
+  Future<void> _loadFromApi() async {
+    setState(() => _loading = true);
+    try {
+      final list = await _svc.list(query: _query.trim().isEmpty ? null : _query.trim());
+      setState(() => _all = list);
+    } catch (e) {
+      // fallback opcional
+      _seed++;
+      setState(() => _all = _mock());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Falha ao carregar da API: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _refresh() async {
-    setState(() => _loading = true);
-    await Future.delayed(const Duration(milliseconds: 700));
-    _seed++;
-    setState(() {
-      _all = _mock(); // aqui você pode trocar por chamada real de API
-      _loading = false;
-    });
+    await _loadFromApi();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Transações atualizadas')),
@@ -67,7 +67,7 @@ class _TransactionsViewState extends State<TransactionsView> {
     final isDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
     final list = _applyFilters();
 
-    final total = list.fold<double>(0, (s, t) => s + (paymentAmounts[t.paymentId] ?? 0));
+    final total = list.fold<double>(0, (s, t) => s + t.amount);
     final approvedCount = list.where((t) => _statusOf(t) == 'approved').length;
     final failedCount = list.where((t) => _statusOf(t) == 'failed').length;
 
@@ -104,7 +104,12 @@ class _TransactionsViewState extends State<TransactionsView> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             TextField(
-              onChanged: (v) => setState(() => _query = v),
+              onChanged: (v) {
+                _query = v;
+                // consulta quando o usuário para de digitar
+                // simples: reload imediato
+                _loadFromApi();
+              },
               decoration: const InputDecoration(
                 hintText: 'Buscar por ID, referência...',
                 prefixIcon: Icon(Icons.search),
@@ -161,7 +166,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  // Empty state
   Widget _empty() => Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
@@ -177,7 +181,6 @@ class _TransactionsViewState extends State<TransactionsView> {
         ),
       );
 
-  // Filtros
   Widget _chipFilter(String label, _TxFilter f) {
     final selected = _filter == f;
     return Padding(
@@ -198,7 +201,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  // Resumo
   Widget _summaryCard(String title, String value, Color valueColor) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -211,16 +213,14 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  // Item da lista
   Widget _txCard(BuildContext context, Transaction t, bool isDark) {
-    final amount = paymentAmounts[t.paymentId] ?? 0;
-    final curr = paymentCurrency[t.paymentId] ?? 'MT';
     final status = _statusOf(t);
     final (dot, color, label) = _statusVisual(status);
+    const curr = 'MT';
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => _showDetails(context, t, amount, curr),
+      onTap: () => _showDetails(context, t, t.amount, curr),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
@@ -232,7 +232,7 @@ class _TransactionsViewState extends State<TransactionsView> {
               const SizedBox(width: 6),
               Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
             ]),
-            Text(_money(amount, curr: curr),
+            Text(_money(t.amount, curr: curr),
                 style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
           ]),
           const SizedBox(height: 6),
@@ -245,7 +245,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  // Popup de detalhes (mantido)
   void _showDetails(BuildContext context, Transaction t, double amount, String curr) {
     final (dot, color, label) = _statusVisual(_statusOf(t));
     showModalBottomSheet(
@@ -289,7 +288,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     );
   }
 
-  // Helpers
   Widget _kv(String k, String v) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -303,7 +301,7 @@ class _TransactionsViewState extends State<TransactionsView> {
         child: OutlinedButton.icon(
           onPressed: onTap,
           icon: Icon(icon, color: green),
-          label: Text(text, style: const TextStyle(color: green, fontWeight: FontWeight.bold)),
+          label: const Text('Copiar ID', style: TextStyle(color: green, fontWeight: FontWeight.bold)),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: green),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -350,7 +348,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     return it.toList();
   }
 
-  // Regra de status provisória
   String _statusOf(Transaction t) {
     switch (t.paymentId) {
       case 1:
@@ -368,7 +365,6 @@ class _TransactionsViewState extends State<TransactionsView> {
     }
   }
 
-  // Mock com variação mínima
   List<Transaction> _mock() {
     final now = DateTime.now();
     final shift = _seed % 2;
@@ -378,8 +374,9 @@ class _TransactionsViewState extends State<TransactionsView> {
         paymentId: shift == 0 ? 1 : 4,
         investorId: 7,
         payerAccount: '258841231234',
-        gatewayRef: 'REF123456789',
-        transactionId: 'TXN456789123',
+        gatewayRef: '123456789',
+        transactionId: '456789123',
+        amount: 150.00,
         createdAt: DateTime(now.year, now.month, now.day, 14, 30),
         updatedAt: DateTime(now.year, now.month, now.day, 14, 31),
       ),
@@ -388,8 +385,9 @@ class _TransactionsViewState extends State<TransactionsView> {
         paymentId: 2,
         investorId: 7,
         payerAccount: '258848765678',
-        gatewayRef: 'REF456789111',
-        transactionId: 'TXN789222333',
+        gatewayRef: '456789111',
+        transactionId: '789222333',
+        amount: 75.50,
         createdAt: DateTime(now.year, now.month, now.day, 12, 15),
         updatedAt: null,
       ),
@@ -398,8 +396,9 @@ class _TransactionsViewState extends State<TransactionsView> {
         paymentId: 3,
         investorId: 7,
         payerAccount: '258849009012',
-        gatewayRef: 'REF789000999',
-        transactionId: 'TXN123000111',
+        gatewayRef: '789000999',
+        transactionId: '123000111',
+        amount: 2300.00,
         createdAt: DateTime(now.year, now.month, now.day - 1, 23, 59),
         updatedAt: DateTime(now.year, now.month, now.day - 1, 23, 59, 50),
       ),
@@ -408,15 +407,15 @@ class _TransactionsViewState extends State<TransactionsView> {
         paymentId: 5,
         investorId: 7,
         payerAccount: '258847897890',
-        gatewayRef: 'REFXYZ12345',
-        transactionId: 'TXN111222333',
+        gatewayRef: '555000111',
+        transactionId: '111222333',
+        amount: 99.90,
         createdAt: DateTime(now.year, now.month, now.day - 2, 10, 0),
         updatedAt: DateTime(now.year, now.month, now.day - 2, 11, 0),
       ),
     ];
   }
 
-  // Formatação
   static String _money(num v, {String curr = 'MT'}) {
     final s = v.toStringAsFixed(2);
     final parts = s.split('.');
@@ -455,7 +454,6 @@ class _TransactionsViewState extends State<TransactionsView> {
   static String _short(String s) => s.length <= 7 ? s : '${s.substring(0, 6)}...';
 
   (Color dot, Color fg, String label) _statusVisual(String status) {
-    // Verde para aprovadas, vermelho para falhas, neutro cinza para restantes
     switch (status) {
       case 'approved':
         return (green, green, 'Aprovada');

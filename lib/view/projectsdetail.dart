@@ -168,7 +168,7 @@ class ProjectDetailsView extends StatelessWidget {
             _MetricCard(
               icon: Icons.calendar_month,
               titulo: 'Período',
-              valor: _dateRange(project.startDate, project.endDate),
+              valor: ""// _dateRange(project.startDate, project.endDate),
             ),
             _MetricCard(
               icon: Icons.account_balance_wallet,

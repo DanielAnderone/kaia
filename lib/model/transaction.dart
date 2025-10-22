@@ -1,11 +1,15 @@
 // lib/model/transaction.dart
+import 'package:flutter/foundation.dart';
+
+@immutable
 class Transaction {
   final int id;
   final int paymentId;
   final int investorId;
   final String payerAccount;
-  final String gatewayRef;
-  final String transactionId;
+  final String gatewayRef;     // backend manda número → guardo como string
+  final String transactionId;  // backend manda número → guardo como string
+  final double amount;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -16,30 +20,47 @@ class Transaction {
     required this.payerAccount,
     required this.gatewayRef,
     required this.transactionId,
+    required this.amount,
     required this.createdAt,
-    this.updatedAt,
+    required this.updatedAt,
   });
 
-  factory Transaction.fromJson(Map<String, dynamic> j) => Transaction(
-        id: j['id'] as int,
-        paymentId: j['payment_id'] as int,
-        investorId: j['investor_id'] as int,
-        payerAccount: (j['payer_account'] ?? '') as String,
-        gatewayRef: (j['gateway_ref'] ?? '') as String,
-        transactionId: (j['transaction_id'] ?? '') as String,
-        createdAt: DateTime.parse(j['created_at'] as String),
-        updatedAt: j['updated_at'] == null
-            ? null
-            : DateTime.parse(j['updated_at'] as String),
-      );
+  // JSON → Modelo (aceita snake_case do backend)
+  factory Transaction.fromBackend(Map<String, dynamic> j) {
+    DateTime? parseDt(dynamic v) {
+      if (v == null) return null;
+      final s = v.toString();
+      return DateTime.tryParse(s);
+    }
 
-  Map<String, dynamic> toJson() => {
+    double parseDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0.0;
+    }
+
+    return Transaction(
+      id: j['id'] is String ? int.parse(j['id']) : (j['id'] ?? 0),
+      paymentId: j['payment_id'] is String ? int.parse(j['payment_id']) : (j['payment_id'] ?? 0),
+      investorId: j['investor_id'] is String ? int.parse(j['investor_id']) : (j['investor_id'] ?? 0),
+      payerAccount: j['payer_account']?.toString() ?? '',
+      gatewayRef: j['gateway_ref']?.toString() ?? '',
+      transactionId: j['transaction_id']?.toString() ?? '',
+      amount: parseDouble(j['amount']),
+      createdAt: parseDt(j['created_at']) ?? DateTime.now(),
+      updatedAt: parseDt(j['updated_at']),
+    );
+  }
+
+  // Modelo → JSON (snake_case que o backend espera)
+  Map<String, dynamic> toBackend() => {
         'id': id,
         'payment_id': paymentId,
         'investor_id': investorId,
         'payer_account': payerAccount,
-        'gateway_ref': gatewayRef,
-        'transaction_id': transactionId,
+        'gateway_ref': int.tryParse(gatewayRef) ?? gatewayRef,
+        'transaction_id': int.tryParse(transactionId) ?? transactionId,
+        'amount': amount,
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt?.toIso8601String(),
       };
@@ -51,6 +72,7 @@ class Transaction {
     String? payerAccount,
     String? gatewayRef,
     String? transactionId,
+    double? amount,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -61,6 +83,7 @@ class Transaction {
       payerAccount: payerAccount ?? this.payerAccount,
       gatewayRef: gatewayRef ?? this.gatewayRef,
       transactionId: transactionId ?? this.transactionId,
+      amount: amount ?? this.amount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

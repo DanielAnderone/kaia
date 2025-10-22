@@ -29,6 +29,10 @@ class ProjectsView extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
+              print('❌ ERRO DETECTADO!');
+              print('❌ Tipo do erro: ${snap.error.runtimeType}');
+              print('❌ Mensagem: ${snap.error}');
+              print('📍 StackTrace: ${snap.stackTrace}');
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

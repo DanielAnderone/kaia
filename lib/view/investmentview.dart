@@ -1,7 +1,8 @@
 // lib/view/my_investments_view.dart
 import 'package:flutter/material.dart';
 import '../model/investment.dart';
-import '../widgts/app_bottom.dart'; // <- menu único
+import '../widgts/app_bottom.dart';
+import '../service/investiment_service.dart';
 
 class MyInvestmentsView extends StatefulWidget {
   final String Function(int projectId)? projectNameOf;
@@ -25,13 +26,33 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
   static const Color bgDark = Color(0xFF112112);
 
   late List<Investment> _items;
+  late final InvestmentService _svc;
+
   _Filter _filter = _Filter.active;
   String _query = '';
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
-    _items = widget.investments.isNotEmpty ? widget.investments : _mock();
+    _items = widget.investments.isNotEmpty ? widget.investments : [];
+    _svc = InvestmentService(baseUrl: 'https://kaia.loophole.site', resourcePath: '/investments/');
+    _loadFromApi();
+  }
+
+  Future<void> _loadFromApi() async {
+    setState(() => _loading = true);
+    try {
+      final list = await _svc.list(query: _query.trim().isEmpty ? null : _query.trim());
+      if (!mounted) return;
+      setState(() => _items = list);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _items = _mock());
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Falha ao carregar: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -69,103 +90,121 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
         centerTitle: true,
         title: Text('Meus Investimentos',
             style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  onChanged: (v) => setState(() => _query = v),
-                  decoration: InputDecoration(
-                    hintText: 'Pesquisar investimentos',
-                    prefixIcon: const Icon(Icons.search),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
-                    enabledBorder: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      borderSide: BorderSide(color: Color(0xFFE5E7EB)),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 150,
-                child: DropdownButtonFormField<_Filter>(
-                  value: _filter,
-                  isDense: true,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                  iconEnabledColor: Colors.white,
-                  iconDisabledColor: Colors.white,
-                  dropdownColor: Colors.white,
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    filled: true,
-                    fillColor: primary,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: primary),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: primary, width: 1.2),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: _Filter.active,
-                      child: Text('Ativos', style: TextStyle(color: Colors.black87)),
-                    ),
-                    DropdownMenuItem(
-                      value: _Filter.inactive,
-                      child: Text('Não ativos', style: TextStyle(color: Colors.black87)),
-                    ),
-                  ],
-                  onChanged: (v) => setState(() => _filter = v ?? _filter),
-                ),
-              ),
-            ],
+        actions: [
+          IconButton(
+            tooltip: 'Atualizar',
+            icon: _loading
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primary))
+                : Icon(Icons.sync, color: isDark ? Colors.white : Colors.black87),
+            onPressed: _loading ? null : _loadFromApi,
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _SummaryCard(title: 'Investimentos', value: '$totalCount')),
-              const SizedBox(width: 8),
-              Expanded(child: _SummaryCard(title: 'Investido', value: _mt(totalInvested))),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SummaryCard(
-                  title: _filter == _Filter.active ? 'Retorno estimado' : 'Retorno real',
-                  value: _mt(totalProfit),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (list.isEmpty)
-            _Empty(message: _filter == _Filter.active ? 'Sem investimentos ativos.' : 'Sem investimentos não ativos.')
-          else
-            ...list.map(
-              (i) => _InvestmentRow(
-                title: titleOf(i),
-                invested: i.investedAmount,
-                profitLabel: _filter == _Filter.active ? 'Estimado:' : 'Real:',
-                profitValue: _filter == _Filter.active ? i.estimatedProfit : i.actualProfit,
-                date: i.applicationDate,
-                statusChip: _filter == _Filter.active
-                    ? _chip('Active', const Color(0xFFE8F8EE), primary)
-                    : _chip('Completed', const Color(0xFFE9F0FF), const Color(0xFF3B82F6)),
-                // Popup em todos os itens
-                onTap: () => _showDetails(context, i, titleOf(i)),
-              ),
-            ),
         ],
+      ),
+      body: RefreshIndicator(
+        color: primary,
+        onRefresh: _loadFromApi,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    onChanged: (v) {
+                      _query = v;
+                      _loadFromApi();
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Pesquisar investimentos',
+                      prefixIcon: Icon(Icons.search),
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 150,
+                  child: DropdownButtonFormField<_Filter>(
+                    value: _filter,
+                    isDense: true,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    iconEnabledColor: Colors.white,
+                    iconDisabledColor: Colors.white,
+                    dropdownColor: Colors.white,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      filled: true,
+                      fillColor: primary,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: primary),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: primary, width: 1.2),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: _Filter.active,
+                        child: Text('Ativos', style: TextStyle(color: Colors.black87)),
+                      ),
+                      DropdownMenuItem(
+                        value: _Filter.inactive,
+                        child: Text('Não ativos', style: TextStyle(color: Colors.black87)),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _filter = v ?? _filter),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _SummaryCard(title: 'Investimentos', value: '$totalCount')),
+                const SizedBox(width: 8),
+                Expanded(child: _SummaryCard(title: 'Investido', value: _mt(totalInvested))),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _SummaryCard(
+                    title: _filter == _Filter.active ? 'Retorno estimado' : 'Retorno real',
+                    value: _mt(totalProfit),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_loading && _items.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+            else if (list.isEmpty)
+              _Empty(message: _filter == _Filter.active ? 'Sem investimentos ativos.' : 'Sem investimentos não ativos.')
+            else
+              ...list.map(
+                (i) => _InvestmentRow(
+                  title: titleOf(i),
+                  invested: i.investedAmount,
+                  profitLabel: _filter == _Filter.active ? 'Estimado:' : 'Real:',
+                  profitValue: _filter == _Filter.active ? i.estimatedProfit : i.actualProfit,
+                  date: i.applicationDate,
+                  statusChip: _filter == _Filter.active
+                      ? _chip('Active', const Color(0xFFE8F8EE), primary)
+                      : _chip('Completed', const Color(0xFFE9F0FF), const Color(0xFF3B82F6)),
+                  onTap: () => _showDetails(context, i, titleOf(i)),
+                ),
+              ),
+          ],
+        ),
       ),
       bottomNavigationBar: const AppBottomNav(current: AppTab.investments),
     );
@@ -236,6 +275,7 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
     );
   }
 
+  // Mock compatível com o modelo atual (status é derivado)
   List<Investment> _mock() {
     final now = DateTime.now();
     return [
@@ -248,7 +288,8 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
         estimatedProfit: 1250,
         actualProfit: 0,
         note: 'Lote 12',
-        status: 'active',
+        createdAt: DateTime(now.year, 6, 15),
+        updatedAt: null,
       ),
       Investment(
         id: 2,
@@ -259,7 +300,8 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
         estimatedProfit: 750,
         actualProfit: 0,
         note: 'Lote 08',
-        status: 'active',
+        createdAt: DateTime(now.year, 5, 20),
+        updatedAt: null,
       ),
       Investment(
         id: 3,
@@ -270,7 +312,8 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
         estimatedProfit: 0,
         actualProfit: 2800,
         note: 'Lote 05',
-        status: 'completed',
+        createdAt: DateTime(now.year, 4, 10),
+        updatedAt: DateTime(now.year, 9, 30),
       ),
     ];
   }
@@ -291,7 +334,6 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
     return 'MT ${b.toString().split('').reversed.join()}';
   }
 
-  // linha K:V
   Widget _kv(String k, String v) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
