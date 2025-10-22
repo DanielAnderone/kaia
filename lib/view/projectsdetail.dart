@@ -1,8 +1,8 @@
-// lib/view/project_details_view.dart
 import 'package:flutter/material.dart';
 import '../model/project.dart';
 import '../model/investor.dart';
 import '../widgts/netImage.dart';
+import '../service/investor_service.dart';
 
 class ProjectDetailsView extends StatelessWidget {
   final Project project;
@@ -26,9 +26,12 @@ class ProjectDetailsView extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    AspectRatio(aspectRatio: 16 / 9, child: NetImage(project.imageUrl ?? '')),
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: NetImage(project.imageUrl ?? ''),
+                    ),
                     _titleAndStatus(isDark),
-                    _metricsGrid(isDark), // Período agora está aqui ao lado de Risco
+                    _metricsGrid(isDark),
                     _description(isDark),
                     const SizedBox(height: 80),
                   ],
@@ -54,10 +57,16 @@ class ProjectDetailsView extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    onPressed: () => _showInvestorDialog(context, userIdProvider: () => 1),
-                    child: const Text('Investir agora', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: () =>
+                        _showInvestorDialog(context, userIdProvider: () => 1),
+                    child: const Text(
+                      'Investir agora',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -68,14 +77,14 @@ class ProjectDetailsView extends StatelessWidget {
     );
   }
 
-  // ---------- seções ----------
   Widget _appBar(bool isDark, BuildContext context) => Container(
         color: isDark ? bgDark : bgLight,
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
         child: Row(
           children: [
             IconButton(
-              icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87),
+              icon: Icon(Icons.arrow_back,
+                  color: isDark ? Colors.white : Colors.black87),
               onPressed: () => Navigator.pop(context),
             ),
             const Expanded(
@@ -85,7 +94,11 @@ class ProjectDetailsView extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
-            IconButton(icon: Icon(Icons.share, color: isDark ? Colors.white : Colors.black87), onPressed: () {}),
+            IconButton(
+              icon: Icon(Icons.share,
+                  color: isDark ? Colors.white : Colors.black87),
+              onPressed: () {},
+            ),
           ],
         ),
       );
@@ -96,14 +109,29 @@ class ProjectDetailsView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              project.name,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 26, fontWeight: FontWeight.bold),
+              project.name ?? 'Projeto',
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: primary.withOpacity(0.2), borderRadius: BorderRadius.circular(999)),
-              child: Text(project.status, style: const TextStyle(color: primary, fontWeight: FontWeight.w600, fontSize: 12)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: primary.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                project.status ?? 'Em progresso',
+                style: const TextStyle(
+                  color: primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
             ),
           ],
         ),
@@ -115,19 +143,44 @@ class ProjectDetailsView extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // garante pares lado a lado
+            crossAxisCount: 2,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
             mainAxisExtent: 64,
           ),
           children: [
-            _MetricCard(icon: Icons.attach_money, titulo: 'Mín. investimento', valor: _mt(project.minimumInvestment)),
-            _MetricCard(icon: Icons.trending_up, titulo: 'Rentabilidade', valor: '${project.profitabilityPercent.toStringAsFixed(0)}%'),
-            // Seguem Risco e Período em sequência para ficarem lado a lado
-            _MetricCard(icon: Icons.shield, titulo: 'Risco', valor: _riskLabel(project.riskLevel)),
-            _MetricCard(icon: Icons.calendar_month, titulo: 'Período', valor: _dateRange(project.startDate, project.endDate)),
-            _MetricCard(icon: Icons.account_balance_wallet, titulo: 'Arrecadado', valor: _mt(project.investmentAchieved)),
-            if (project.totalProfit != null) _MetricCard(icon: Icons.ssid_chart, titulo: 'Lucro total', valor: _mt(project.totalProfit!)),
+            _MetricCard(
+              icon: Icons.attach_money,
+              titulo: 'Mín. investimento',
+              valor: _mt(project.minimumInvestment ?? 0),
+            ),
+            _MetricCard(
+              icon: Icons.trending_up,
+              titulo: 'Rentabilidade',
+              valor:
+                  '${(project.profitabilityPercent ?? 0).toStringAsFixed(0)}%',
+            ),
+            _MetricCard(
+              icon: Icons.shield,
+              titulo: 'Risco',
+              valor: _riskLabel(project.riskLevel ?? ''),
+            ),
+            _MetricCard(
+              icon: Icons.calendar_month,
+              titulo: 'Período',
+              valor: ""// _dateRange(project.startDate, project.endDate),
+            ),
+            _MetricCard(
+              icon: Icons.account_balance_wallet,
+              titulo: 'Arrecadado',
+              valor: _mt(project.investmentAchieved ?? 0),
+            ),
+            if (project.totalProfit != null)
+              _MetricCard(
+                icon: Icons.ssid_chart,
+                titulo: 'Lucro total',
+                valor: _mt(project.totalProfit!),
+              ),
           ],
         ),
       );
@@ -137,14 +190,26 @@ class ProjectDetailsView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Descrição', style: TextStyle(color: isDark ? Colors.white : Colors.grey[900], fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(
+              'Descrição',
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.grey[900],
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(project.description, style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[700], height: 1.35)),
+            Text(
+              project.description ?? 'Sem descrição disponível.',
+              style: TextStyle(
+                color: isDark ? Colors.grey[300] : Colors.grey[700],
+                height: 1.35,
+              ),
+            ),
           ],
         ),
       );
 
-  // ---------- Dialog: 100% branco, textos pretos, inputs com traço inferior ----------
   Future<void> _showInvestorDialog(
     BuildContext context, {
     required int Function() userIdProvider,
@@ -157,7 +222,8 @@ class ProjectDetailsView extends StatelessWidget {
     final bornDateCtrl = TextEditingController();
     DateTime? bornDate;
 
-    String? req(String? v) => (v == null || v.trim().isEmpty) ? 'Obrigatório' : null;
+    String? req(String? v) =>
+        (v == null || v.trim().isEmpty) ? 'Obrigatório' : null;
 
     Future<void> pickDate() async {
       final now = DateTime.now();
@@ -170,24 +236,6 @@ class ProjectDetailsView extends StatelessWidget {
         helpText: 'Selecione a data de nascimento',
         confirmText: 'OK',
         cancelText: 'Cancelar',
-        builder: (ctx, child) {
-          final base = Theme.of(ctx);
-          return Theme(
-            data: base.copyWith(
-              colorScheme: base.colorScheme.copyWith(
-                primary: Colors.black87,
-                onPrimary: Colors.white,
-                surface: Colors.white,
-                onSurface: Colors.black87,
-              ),
-              dialogBackgroundColor: Colors.white,
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(foregroundColor: Colors.black87),
-              ),
-            ),
-            child: child!,
-          );
-        },
       );
       if (picked != null) {
         bornDate = picked;
@@ -198,89 +246,109 @@ class ProjectDetailsView extends StatelessWidget {
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => Theme(
-        data: Theme.of(ctx).copyWith(
-          dialogBackgroundColor: Colors.white,
-          textTheme: Theme.of(ctx).textTheme.apply(bodyColor: Colors.black87, displayColor: Colors.black87),
-          inputDecorationTheme: const InputDecorationTheme(
-            labelStyle: TextStyle(color: Colors.black87),
-            hintStyle: TextStyle(color: Colors.black54),
-            filled: false,
-            border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black54)),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black54)),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.black87, width: 1.4)),
-            contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-          ),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Cadastro de Investidor',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
         ),
-        child: AlertDialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Cadastro de Investidor', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700)),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(controller: name, validator: req, decoration: const InputDecoration(labelText: 'Nome completo')),
-                  const SizedBox(height: 4),
-                  TextFormField(controller: phone, validator: req, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Telefone')),
-                  const SizedBox(height: 4),
-                  TextFormField(
-                    controller: bornDateCtrl,
-                    readOnly: true,
-                    onTap: pickDate,
-                    validator: (_) => bornDate == null ? 'Obrigatório' : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Data de nascimento',
-                      suffixIcon: Icon(Icons.event, color: Colors.black54),
-                    ),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                    controller: name,
+                    validator: req,
+                    decoration:
+                        const InputDecoration(labelText: 'Nome completo')),
+                const SizedBox(height: 4),
+                TextFormField(
+                    controller: phone,
+                    validator: req,
+                    keyboardType: TextInputType.phone,
+                    decoration:
+                        const InputDecoration(labelText: 'Telefone')),
+                const SizedBox(height: 4),
+                TextFormField(
+                  controller: bornDateCtrl,
+                  readOnly: true,
+                  onTap: pickDate,
+                  validator: (_) => bornDate == null ? 'Obrigatório' : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Data de nascimento',
+                    suffixIcon: Icon(Icons.event, color: Colors.black54),
                   ),
-                  const SizedBox(height: 4),
-                  TextFormField(controller: identityCard, validator: req, decoration: const InputDecoration(labelText: 'Bilhete de Identidade / Doc.')),
-                  const SizedBox(height: 4),
-                  TextFormField(controller: nuit, validator: req, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'NUIT')),
-                ],
-              ),
+                ),
+                const SizedBox(height: 4),
+                TextFormField(
+                    controller: identityCard,
+                    validator: req,
+                    decoration: const InputDecoration(
+                        labelText: 'Bilhete de Identidade / Doc.')),
+                const SizedBox(height: 4),
+                TextFormField(
+                    controller: nuit,
+                    validator: req,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'NUIT')),
+              ],
             ),
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          actionsAlignment: MainAxisAlignment.end,
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.black87))),
-            OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.black87,
-                side: const BorderSide(color: Colors.black54),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: () {
-                if (!formKey.currentState!.validate()) return;
-
-                final investor = Investor(
-                  userId: userIdProvider(),
-                  name: name.text.trim(),
-                  phone: phone.text.trim(),
-                  bornDate: bornDate!,
-                  identityCard: identityCard.text.trim(),
-                  nuit: nuit.text.trim(),
-                );
-
-                // TODO: POST investor.toJson() na sua API
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cadastro enviado')));
-              },
-              child: const Text('Cadastrar'),
-            ),
-          ],
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.black87)),
+          ),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.black87,
+              side: const BorderSide(color: Colors.black54),
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+
+              final investor = Investor(
+                userId: userIdProvider(),
+                name: name.text.trim(),
+                phone: phone.text.trim(),
+                bornDate: bornDate!,
+                identityCard: identityCard.text.trim(),
+                nuit: nuit.text.trim(),
+              );
+
+              try {
+                final created = await InvestorService().createInvestor(investor);
+                if (context.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  Navigator.pushNamed(
+                    context,
+                    '/pagamentos',
+                    arguments: {'investor': created, 'project': project},
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Erro ao cadastrar investidor: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Cadastrar'),
+          ),
+        ],
       ),
     );
   }
 
-  // ---------- utils ----------
   static String _riskLabel(String v) {
     switch (v.toLowerCase()) {
       case 'baixo':
@@ -295,22 +363,28 @@ class ProjectDetailsView extends StatelessWidget {
   }
 
   static String _dateRange(DateTime? s, DateTime? e) {
-    String f(DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    String f(DateTime d) =>
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
     if (s == null && e == null) return 'Sem datas';
     if (s != null && e == null) return 'Início: ${f(s)}';
     if (s == null && e != null) return 'Término: ${f(e)}';
     return '${f(s!)} → ${f(e!)}';
   }
 
-  static String _fmtDate(DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  static String _fmtDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
   static String _mt(num v) {
     final s = v.toInt().toString();
     final b = StringBuffer();
     var c = 0;
     for (var i = s.length - 1; i >= 0; i--) {
-      b.write(s[i]); c++;
-      if (c == 3 && i != 0) { b.write('.'); c = 0; }
+      b.write(s[i]);
+      c++;
+      if (c == 3 && i != 0) {
+        b.write('.');
+        c = 0;
+      }
     }
     return 'MT ${b.toString().split('').reversed.join()}';
   }
@@ -320,14 +394,16 @@ class _MetricCard extends StatelessWidget {
   final IconData icon;
   final String titulo;
   final String valor;
-  const _MetricCard({required this.icon, required this.titulo, required this.valor});
+  const _MetricCard(
+      {required this.icon, required this.titulo, required this.valor});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(minHeight: 64),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Icon(icon, color: ProjectDetailsView.primary, size: 18),
@@ -340,9 +416,19 @@ class _MetricCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(titulo, softWrap: false, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+                  Text(titulo,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          const TextStyle(color: Colors.black54, fontSize: 12)),
                   const SizedBox(height: 2),
-                  Text(valor, softWrap: false, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(valor,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: Colors.black87,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14)),
                 ],
               ),
             ),

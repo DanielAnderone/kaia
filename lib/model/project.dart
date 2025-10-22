@@ -1,47 +1,85 @@
 class Project {
-  final int id;
-  final int ownerId;
-  final String name;                 // adicione no backend OU derive de description
-  final String description;
-  final DateTime? startDate;
-  final DateTime? endDate;
+  final int? id;
+  final int? ownerId;
+  final String? description;
+  final String? startDate;
+  final String? endDate;
+  final double profitabilityPercent;
+  final double minimumInvestment;
+  final String? riskLevel;
+  final String? status;
+  final String? mediaPath;
+  final double? investmentAchieved;
   final double? totalProfit;
-  final double profitabilityPercent; // %
-  final double minimumInvestment;    // MT
-  final String riskLevel;            // "baixo|medio|alto"
-  final String status;               // "Ativo|Planeado|..."
-  final int investmentAchieved;      // MT
-  final String? imageUrl;
+  final String? createdAt;
+  final String? updatedAt;
 
-  const Project({
-    required this.id,
-    required this.ownerId,
-    required this.name,
-    required this.description,
+  Project({
+    this.id,
+    this.ownerId,
+    this.description,
     this.startDate,
     this.endDate,
-    this.totalProfit,
     required this.profitabilityPercent,
     required this.minimumInvestment,
-    required this.riskLevel,
-    required this.status,
-    required this.investmentAchieved,
-    this.imageUrl,
+    this.riskLevel,
+    this.status,
+    this.mediaPath,
+    this.investmentAchieved,
+    this.totalProfit,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  factory Project.fromJson(Map<String, dynamic> j) => Project(
-    id: j['id'],
-    ownerId: j['owner_id'],
-    name: j['name'] ?? '',                 // se o backend ainda não tiver, preencha
-    description: j['description'] ?? '',
-    startDate: j['start_date'] == null ? null : DateTime.parse(j['start_date']),
-    endDate: j['end_date'] == null ? null : DateTime.parse(j['end_date']),
-    totalProfit: (j['total_profit'] as num?)?.toDouble(),
-    profitabilityPercent: (j['profitability_percent'] as num).toDouble(),
-    minimumInvestment: (j['minimum_investment'] as num).toDouble(),
-    riskLevel: j['risk_level'] ?? 'medio',
-    status: j['status'] ?? 'Ativo',
-    investmentAchieved: j['investment_achieved'] ?? 0,
-    imageUrl: j['image_url'],
-  );
+  // Propriedades auxiliares para compatibilidade com a UI
+  String? get name => description;
+  
+  String? get imageUrl {
+    if (mediaPath == null || mediaPath!.isEmpty || mediaPath == '//') {
+      return 'https://picsum.photos/seed/${id ?? 0}/400/300';
+    }
+    // Ajuste a URL base conforme seu servidor
+    if (mediaPath!.startsWith('http')) {
+      return mediaPath;
+    }
+    return 'https://kaia.loophole.site/projects/download/$id';
+  }
+
+  factory Project.fromJson(Map<String, dynamic> json) {
+    return Project(
+      id: json['id'] as int?,
+      ownerId: json['owner_id'] as int?,
+      description: json['description'] as String?,
+      startDate: json['start_date'] as String?,
+      endDate: json['end_date'] as String?,
+      profitabilityPercent: (json['profitability_percent'] as num?)?.toDouble() ?? 0.0,
+      minimumInvestment: (json['minimum_investment'] as num?)?.toDouble() ?? 0.0,
+      riskLevel: json['risk_level'] as String?,
+      status: json['status'] as String?,
+      mediaPath: json['media_path'] as String?,
+      investmentAchieved: (json['investment_achieved'] as num?)?.toDouble(),
+      totalProfit: (json['total_profit'] as num?)?.toDouble(),
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'owner_id': ownerId,
+      'description': description,
+      'start_date': startDate,
+      'end_date': endDate,
+      'profitability_percent': profitabilityPercent,
+      'minimum_investment': minimumInvestment,
+      'risk_level': riskLevel,
+      'status': status,
+      'media_path': mediaPath,
+      'investment_achieved': investmentAchieved,
+      'total_profit': totalProfit,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+    };
+  }
 }

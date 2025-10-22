@@ -1,13 +1,21 @@
-// lib/model/investment.dart
+import 'package:flutter/foundation.dart';
+
+@immutable
 class Investment {
   final int id;
   final int projectId;
   final int investorId;
   final double investedAmount;
   final DateTime applicationDate;
-  final double estimatedProfit; // do backend
-  final double actualProfit;    // pode ser 0 enquanto não liquidado
+  final double estimatedProfit;
+  final double actualProfit;
   final String? note;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  // Derivados para sua UI atual
+  String get status => actualProfit > 0 ? 'completed' : 'active';
+  bool get isActive => status == 'active';
 
   const Investment({
     required this.id,
@@ -17,21 +25,31 @@ class Investment {
     required this.applicationDate,
     required this.estimatedProfit,
     required this.actualProfit,
-    this.note,
+    required this.note,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
-  factory Investment.fromJson(Map<String, dynamic> j) => Investment(
-        id: j['id'] as int,
-        projectId: j['project_id'] as int,
-        investorId: j['investor_id'] as int,
-        investedAmount: (j['invested_amount'] as num).toDouble(),
-        applicationDate: DateTime.parse(j['application_date'] as String),
-        estimatedProfit: (j['estimated_profit'] as num).toDouble(),
-        actualProfit: (j['actual_profit'] as num).toDouble(),
-        note: j['note'] as String?,
-      );
+  factory Investment.fromBackend(Map<String, dynamic> j) {
+    double toD(v) => v is num ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0.0;
+    int toI(v) => v is int ? v : int.tryParse(v?.toString() ?? '') ?? 0;
+    DateTime? toDt(v) => v == null ? null : DateTime.tryParse(v.toString());
 
-  Map<String, dynamic> toJson() => {
+    return Investment(
+      id: toI(j['id']),
+      projectId: toI(j['project_id']),
+      investorId: toI(j['investor_id']),
+      investedAmount: toD(j['invested_amount']),
+      applicationDate: toDt(j['application_date']) ?? DateTime.now(),
+      estimatedProfit: toD(j['estimated_profit']),
+      actualProfit: toD(j['actual_profit']),
+      note: j['note']?.toString(),
+      createdAt: toDt(j['created_at']) ?? DateTime.now(),
+      updatedAt: toDt(j['updated_at']),
+    );
+  }
+
+  Map<String, dynamic> toBackend() => {
         'id': id,
         'project_id': projectId,
         'investor_id': investorId,
@@ -40,7 +58,7 @@ class Investment {
         'estimated_profit': estimatedProfit,
         'actual_profit': actualProfit,
         'note': note,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt?.toIso8601String(),
       };
-
-  bool get isActive => actualProfit == 0; // regra simples: sem lucro realizado => ativo
 }

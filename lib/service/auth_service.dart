@@ -9,10 +9,13 @@ class AuthService {
 
   /// LOGIN
   Future<AuthResponse> login(AuthRequest req) async {
-    final uri = Uri.parse('$baseUrl/api/v1/auth/login');
+    final uri = Uri.parse('$baseUrl/u/login');
     final res = await http.post(
       uri,
-      headers: {"Content-Type": "application/json"},
+      headers: const {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
       body: jsonEncode(req.toJson()),
     );
 
@@ -22,7 +25,8 @@ class AuthService {
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', auth.token);
-      await prefs.setString('user_email', auth.user.email);
+      // se o seu modelo permitir nulo, proteja aqui:
+      await prefs.setString('user_email', auth.user.email ?? '');
       await prefs.setInt('user_id', auth.user.id);
       return auth;
     }
@@ -35,14 +39,14 @@ class AuthService {
     throw Exception(msg);
   }
 
-  /// REGISTRO DE NOVO USUÁRIO
+  /// CADASTRO
   Future<bool> registerUser({
     required String username,
     required String email,
     required String password,
-    String? status, // ativo, inativo ou omitido
+    String? status, // opcional
   }) async {
-    final uri = Uri.parse('$baseUrl/u/login');
+    final uri = Uri.parse('$baseUrl/u/signup'); // <— endpoint correto de cadastro
     final payload = {
       "username": username.trim(),
       "email": email.trim(),
@@ -52,7 +56,10 @@ class AuthService {
 
     final res = await http.post(
       uri,
-      headers: {"Content-Type": "application/json"},
+      headers: const {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
       body: jsonEncode(payload),
     );
 
