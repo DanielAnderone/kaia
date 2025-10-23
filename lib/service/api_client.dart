@@ -4,7 +4,7 @@ class ApiClient {
   ApiClient._();
 
   static final Dio dio = Dio(BaseOptions(
-    baseUrl: const String.fromEnvironment('BASE_URL', defaultValue: "http://0.0.0.0:8080"),
+    baseUrl: const String.fromEnvironment('BASE_URL', defaultValue: "https://kaia.loophole.site"),
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 15),
     headers: {

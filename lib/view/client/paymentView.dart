@@ -10,7 +10,7 @@ class PaymentView extends StatefulWidget {
   final String? phone; // opcional, será sobrescrito se vier via arguments
   const PaymentView({
     super.key,
-    this.apiBaseUrl = "http://0.0.0.0:8080",
+    this.apiBaseUrl = "https://kaia.loophole.site",
     this.phone,
   });
 

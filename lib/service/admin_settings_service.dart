@@ -5,7 +5,7 @@ import '../model/admin_settings.dart';
 import '../utils/token_manager.dart';
 
 class AdminSettingsService {
-  final String baseUrl = "http://0.0.0.0:8080"; // URL base do seu backend
+  final String baseUrl = "https://kaia.loophole.site"; // URL base do seu backend
 
   /// 🔹 Busca configurações do administrador (mock ou API real)
   Future<AdminSettings> fetchAdminSettings() async {

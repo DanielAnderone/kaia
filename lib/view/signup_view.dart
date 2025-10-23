@@ -8,7 +8,7 @@ class SignUpView extends StatefulWidget {
   final Color buttonColor;
   const SignUpView({
     super.key,
-    this.apiBaseUrl = "http://0.0.0.0:8080", // URL base definida aqui
+    this.apiBaseUrl = "https://kaia.loophole.site", // URL base definida aqui
     this.buttonColor = const Color(0xFF22C55E),
   });
 

@@ -13,7 +13,7 @@ class LoginView extends StatefulWidget {
   final Color buttonColor;
   const LoginView({
     super.key,
-    this.apiBaseUrl = "http://0.0.0.0:8080", // URL base padrão
+    this.apiBaseUrl = "https://kaia.loophole.site", // URL base padrão
     this.logo,
     this.buttonColor = const Color(0xFF22C55E),
   });
