@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import '../service/payment_service.dart';
-import '../model/project.dart';
-import '../model/investor.dart';
+import 'package:kaia_app/model/transaction.dart';
+import 'package:kaia_app/service/transaction_service.dart';
+import '../../service/payment_service.dart';
+import '../../model/project.dart';
+import '../../model/investor.dart';
 
 class PaymentView extends StatefulWidget {
   final String apiBaseUrl;
   final String? phone; // opcional, será sobrescrito se vier via arguments
   const PaymentView({
     super.key,
-    this.apiBaseUrl = 'https://kaia.loophole.site',
+    this.apiBaseUrl = "http://0.0.0.0:8080",
     this.phone,
   });
 
@@ -27,12 +29,12 @@ class _PaymentViewState extends State<PaymentView> {
   int? _payerToId;   // project.ownerId
   String? _phone;    // investor.phone
 
-  late final PaymentService _service;
+  late final TransactionService _service;
 
   @override
   void initState() {
     super.initState();
-    _service = PaymentService(baseUrl: widget.apiBaseUrl);
+    _service = TransactionService();
   }
 
   @override
@@ -182,24 +184,27 @@ class _PaymentViewState extends State<PaymentView> {
 
     setState(() => _loading = true);
     try {
-      // regra simples: envia total_amount igual ao valor informado
-      final req = PaymentRequest(
-        payerFromId: _payerFromId!,
-        payerToId: _payerToId!,
-        paidAmount: valor,
-        totalAmount: valor,
+      // Cria transação para o backend
+      final transaction = Transaction(
+        investorId: 1,
+        payerAccount: _phone!,
+        gatewayRef: '',
+        transactionId: DateTime.now().millisecondsSinceEpoch.toString(),
+        amount: valor,
+        paymentId: 1, // ou null se o backend gerar
       );
 
-      final resp = await _service.createPayment(req);
+      final resp = await _service.createTransaction(transaction);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Pagamento criado: ${resp['id'] ?? 'ok'}')),
+        SnackBar(content: Text('Pagamento criado: ${resp.id ?? 'ok'}')),
       );
+
       _showRecibo(
         _ReciboMock(
-          id: '${resp['id'] ?? DateTime.now().millisecondsSinceEpoch}',
-          phone: _phone ?? '',
+          id: '${resp.id ?? DateTime.now().millisecondsSinceEpoch}',
+          phone: _phone!,
           valor: valor,
           taxa: '0.00',
           total: valor.toStringAsFixed(2),
@@ -215,6 +220,7 @@ class _PaymentViewState extends State<PaymentView> {
       if (mounted) setState(() => _loading = false);
     }
   }
+
 
   void _showRecibo(_ReciboMock r) {
     showModalBottomSheet(

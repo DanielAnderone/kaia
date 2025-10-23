@@ -1,7 +1,9 @@
 // lib/view/login_view.dart
 import 'package:flutter/material.dart';
+import 'package:kaia_app/model/auth.dart';
+import 'package:kaia_app/utils/token_manager.dart';
 import '../service/auth_service.dart';
-import '../view/project_view.dart';
+// import '../view/project_view.dart';
 import '../viewmodel/login_viewmodel.dart';
 import 'signup_view.dart'; // necessário para a animação de navegação
 
@@ -11,7 +13,7 @@ class LoginView extends StatefulWidget {
   final Color buttonColor;
   const LoginView({
     super.key,
-    this.apiBaseUrl = 'https://kaia.loophole.site', // URL base padrão
+    this.apiBaseUrl = "http://0.0.0.0:8080", // URL base padrão
     this.logo,
     this.buttonColor = const Color(0xFF22C55E),
   });
@@ -47,8 +49,20 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _submit() async {
     if (!(_form.currentState?.validate() ?? false)) return;
-    final ok = await vm.login(_email.text.trim(), _pass.text);
-    if (ok && mounted) Navigator.pushReplacementNamed(context, '/projects');
+    final res = await vm.login(_email.text.trim(), _pass.text);
+    
+    if (res !=null && mounted)  {
+      SesManager.setJWTToken(res['token']);
+      SesManager.setPayload(User.fromJson(res['user']));  
+
+      if (res["user"]["role"] == "admin") {
+        Navigator.pushReplacementNamed(context, "/admin/dashboard");
+        return;
+      } else if (res["user"]["role"] == "user") {
+        Navigator.pushReplacementNamed(context, '/investor/projects');
+        return;
+      }
+    }
   }
 
   InputDecoration _underline(String hint, IconData icon) {

@@ -14,16 +14,16 @@ class AppBottomNav extends StatelessWidget {
     String route;
     switch (tab) {
       case AppTab.Inicio:
-        route = '/Inicio';
+        route = '/investor/projects';
         break;
       case AppTab.investments:
-        route = '/investments';
+        route = '/investor/investiments';
         break;
       case AppTab.transacao:
-        route = '/transacao';
+        route = '/investor/transactions';
         break;
       case AppTab.profile:
-        route = '/profile';
+        route = '/investor/profile';
         break;
     }
 

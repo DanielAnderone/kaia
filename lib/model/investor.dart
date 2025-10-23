@@ -34,11 +34,11 @@ class Investor {
       );
 
   Map<String, dynamic> toJson() => {
-        'user_id': userId,
-        'name': name,
-        'phone': phone,
-        'born_date': bornDate.toUtc().toIso8601String(),
-        'identity_card': identityCard,
-        'nuit': nuit,
-      };
+      'user_id': userId,
+      'name': name,
+      'phone': phone,
+      'born_date': bornDate.toUtc().toIso8601String(),
+      'identity_card': identityCard,
+      'nuit': nuit,
+    };
 }

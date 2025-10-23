@@ -30,7 +30,7 @@ class Investment {
     required this.updatedAt,
   });
 
-  factory Investment.fromBackend(Map<String, dynamic> j) {
+  factory Investment.fromJson(Map<String, dynamic> j) {
     double toD(v) => v is num ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0.0;
     int toI(v) => v is int ? v : int.tryParse(v?.toString() ?? '') ?? 0;
     DateTime? toDt(v) => v == null ? null : DateTime.tryParse(v.toString());
@@ -49,7 +49,7 @@ class Investment {
     );
   }
 
-  Map<String, dynamic> toBackend() => {
+  Map<String, dynamic> toJson() => {
         'id': id,
         'project_id': projectId,
         'investor_id': investorId,

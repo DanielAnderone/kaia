@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:kaia_app/view/client/profile_view.dart';
 import './view/login_view.dart';
 import './view/signup_view.dart';
-import 'view/project_view.dart';
-import 'view/paymentView.dart';
-import 'view/transactions_view.dart';
+import 'view/client/project_view.dart';
+import 'view/client/paymentView.dart';
+import 'view/client/investmentview.dart';
+import 'view/client/transactions_view.dart';
+import 'view/admin/admin_dashboard_view.dart';
+import 'view/admin/admin_profile_screen.dart';
+import 'view/admin/admin_project_management_view.dart';
+import 'view/admin/admin_settings_view.dart';
+import 'view/admin/investment_management_view.dart';
+import 'view/client/investors_view.dart';
 
 void main() => runApp(const KaiaApp());
 
@@ -23,10 +31,17 @@ class KaiaApp extends StatelessWidget {
       routes: {
         '/': (_) => const LoginView(),              // tela de login
         '/signup': (_) => const SignUpView(),       // opcional se quiser via rota
-        '/projects': (_) => const ProjectsView(),   // home após login
-        '/pagamentos': (_) => const PaymentView(),
-        '/transacao': (_) => const TransactionsView(),
-        // stub opcional para evitar erro no botão "Forgot"
+        '/investor/projects': (_) => const ProjectsView(),   // home após login
+        '/investor/payments': (_) => const PaymentView(),
+        '/investor/transactions': (_) => const TransactionsView(),
+        '/investor/profile': (_) => const AccountView(),
+        '/investor/investiments': (_) => const InvestmentsView(),
+        '/admin/investiments': (context) => const InvestmentManagementView(),
+        '/admin/dashboard': (context) => const AdminDashboardView(),
+        '/admin/pgmanagement': (context) => const AdminProjectManagementView(),
+        '/admin/investors': (context) => const InvestorsView(),
+        '/admin/profile': (context) => const AdminProfileScreen(),
+        '/admin/settings': (context) => const AdminSettingsView(),
         '/forgot': (_) => const Scaffold(
               body: Center(child: Text('Recuperar senha (em breve)')),
             ),

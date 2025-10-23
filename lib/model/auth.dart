@@ -42,13 +42,30 @@ class User {
     createdAt: DateTime.parse(j["created_at"]),
     updatedAt: DateTime.parse(j["updated_at"]),
   );
+
+  Map<String, dynamic> toJson() => {
+      "id": id,
+      "username": username,
+      "email": email,
+      "role": role,
+      "status": status,
+      "last_login": lastLogin?.toIso8601String(),
+      "created_at": createdAt.toIso8601String(),
+      "updated_at": updatedAt.toIso8601String(),
+    };
 }
 
 class AuthResponse {
   final String token; // JWT
   final User user;
+
   AuthResponse({required this.token, required this.user});
 
   factory AuthResponse.fromJson(Map<String, dynamic> j) =>
       AuthResponse(token: j["token"], user: User.fromJson(j["user"]));
+
+  Map<String, dynamic> toJson() => {
+        "token": token,
+        "user": user.toJson(),
+  };
 }

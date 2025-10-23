@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../model/project.dart';
+import '../../model/project.dart';
 import 'projectsdetail.dart';
-import '../widgts/netimage.dart';
-import '../widgts/app_bottom.dart';
-import '../service/project_service.dart';
+import '../../widgts/netImage.dart';
+import '../../widgts/app_bottom.dart';
+import '../../service/project_service.dart';
 
 class ProjectsView extends StatelessWidget {
   const ProjectsView({super.key});
@@ -20,7 +20,7 @@ class ProjectsView extends StatelessWidget {
     final service = ProjectService();
 
     return Scaffold(
-      backgroundColor: isDark ? bgDark : bgLight,
+      backgroundColor: /*isDark ? bgDark :*/ bgLight,
       body: SafeArea(
         child: FutureBuilder<List<Project>>(
           future: service.listProjects(),
@@ -29,10 +29,6 @@ class ProjectsView extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (snap.hasError) {
-              print('❌ ERRO DETECTADO!');
-              print('❌ Tipo do erro: ${snap.error.runtimeType}');
-              print('❌ Mensagem: ${snap.error}');
-              print('📍 StackTrace: ${snap.stackTrace}');
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

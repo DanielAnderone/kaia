@@ -1,6 +1,6 @@
 // lib/view/account_view.dart
 import 'package:flutter/material.dart';
-import '../widgts/app_bottom.dart'; // menu inferior
+import '../../widgts/app_bottom.dart'; // menu inferior
 
 class AccountView extends StatefulWidget {
   final String name;

@@ -1,32 +1,28 @@
 // lib/view/my_investments_view.dart
 import 'package:flutter/material.dart';
-import '../model/investment.dart';
-import '../widgts/app_bottom.dart';
-import '../service/investiment_service.dart';
+import '../../model/investment.dart';
+import '../../widgts/app_bottom.dart';
+import '../../service/investiment_service.dart';
 
-class MyInvestmentsView extends StatefulWidget {
+class InvestmentsView extends StatefulWidget {
   final String Function(int projectId)? projectNameOf;
   final List<Investment> investments;
 
-  const MyInvestmentsView({
-    super.key,
-    required this.investments,
-    this.projectNameOf,
-  });
+  const InvestmentsView({ super.key, this.projectNameOf, this.investments = const [] });
 
   @override
-  State<MyInvestmentsView> createState() => _MyInvestmentsViewState();
+  State<InvestmentsView> createState() => _InvestmentsViewState();
 }
 
 enum _Filter { active, inactive }
 
-class _MyInvestmentsViewState extends State<MyInvestmentsView> {
+class _InvestmentsViewState extends State<InvestmentsView> {
   static const Color primary = Color(0xFF169C1D);
   static const Color bgLight = Color(0xFFF6F8F6);
   static const Color bgDark = Color(0xFF112112);
 
   late List<Investment> _items;
-  late final InvestmentService _svc;
+  late final InvestmentService _service;
 
   _Filter _filter = _Filter.active;
   String _query = '';
@@ -36,14 +32,14 @@ class _MyInvestmentsViewState extends State<MyInvestmentsView> {
   void initState() {
     super.initState();
     _items = widget.investments.isNotEmpty ? widget.investments : [];
-    _svc = InvestmentService(baseUrl: 'https://kaia.loophole.site', resourcePath: '/investments/');
+    _service = InvestmentService();
     _loadFromApi();
   }
 
   Future<void> _loadFromApi() async {
     setState(() => _loading = true);
     try {
-      final list = await _svc.list(query: _query.trim().isEmpty ? null : _query.trim());
+      final list = await _service.getAll();
       if (!mounted) return;
       setState(() => _items = list);
     } catch (e) {
@@ -422,13 +418,13 @@ class _InvestmentRow extends StatelessWidget {
                     statusChip,
                   ]),
                   const SizedBox(height: 6),
-                  Text('Invested: ${_MyInvestmentsViewState._mt(invested)}',
+                  Text('Invested: ${_InvestmentsViewState._mt(invested)}',
                       style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       Text('$profitLabel ', style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                      Text(_MyInvestmentsViewState._mt(profitValue),
+                      Text(_InvestmentsViewState._mt(profitValue),
                           style: const TextStyle(color: Color(0xFF169C1D), fontSize: 12, fontWeight: FontWeight.w700)),
                       const Text(' ↑', style: TextStyle(color: Color(0xFF169C1D), fontSize: 12)),
                     ],

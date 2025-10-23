@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import '../model/project.dart';
-import '../model/investor.dart';
-import '../widgts/netImage.dart';
-import '../service/investor_service.dart';
+import 'package:kaia_app/utils/token_manager.dart';
+import 'package:kaia_app/viewmodel/investor_viewmodel.dart';
+import '../../model/project.dart';
+import '../../model/investor.dart';
+import '../../widgts/netImage.dart';
+import '../../service/investor_service.dart';
 
 class ProjectDetailsView extends StatelessWidget {
   final Project project;
@@ -118,8 +120,7 @@ class ProjectDetailsView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: primary.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(999),
@@ -166,10 +167,10 @@ class ProjectDetailsView extends StatelessWidget {
               valor: _riskLabel(project.riskLevel ?? ''),
             ),
             _MetricCard(
-              icon: Icons.calendar_month,
-              titulo: 'Período',
-              valor: ""// _dateRange(project.startDate, project.endDate),
-            ),
+                icon: Icons.calendar_month,
+                titulo: 'Período',
+                valor: "" // _dateRange(project.startDate, project.endDate),
+                ),
             _MetricCard(
               icon: Icons.account_balance_wallet,
               titulo: 'Arrecadado',
@@ -269,8 +270,7 @@ class ProjectDetailsView extends StatelessWidget {
                     controller: phone,
                     validator: req,
                     keyboardType: TextInputType.phone,
-                    decoration:
-                        const InputDecoration(labelText: 'Telefone')),
+                    decoration: const InputDecoration(labelText: 'Telefone')),
                 const SizedBox(height: 4),
                 TextFormField(
                   controller: bornDateCtrl,
@@ -302,19 +302,21 @@ class ProjectDetailsView extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.black87)),
+            child:
+                const Text('Cancelar', style: TextStyle(color: Colors.black87)),
           ),
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.black87,
               side: const BorderSide(color: Colors.black54),
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
 
-              final investor = Investor(
+              var investor = Investor(
                 userId: userIdProvider(),
                 name: name.text.trim(),
                 phone: phone.text.trim(),
@@ -324,12 +326,31 @@ class ProjectDetailsView extends StatelessWidget {
               );
 
               try {
-                final created = await InvestorService().createInvestor(investor);
+                final payload = await SesManager.getPayload();
+                Investor? created; // declarar fora do if
+
+                if (payload.id == 0) {
+                  final created = await InvestorViewModel().createInvestor(investor);
+                  if (created == null) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Erro ao criar conta de investidor.')),
+                      );
+                    }
+                    return; // interrompe se falhou
+                  }
+                  investor = created;
+                } else {
+
+                  investor = investor;
+                }
+
                 if (context.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
+
+                if (context.mounted && created == null) {
                   Navigator.pushNamed(
                     context,
-                    '/pagamentos',
+                    '/investor/payments',
                     arguments: {'investor': created, 'project': project},
                   );
                 }

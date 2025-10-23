@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../model/transaction.dart';
-import '../widgts/app_bottom.dart';
-import '../service/transaction_service.dart';
+import '../../model/transaction.dart';
+import '../../widgts/app_bottom.dart';
+import '../../service/transaction_service.dart';
 
 class TransactionsView extends StatefulWidget {
   final List<Transaction> items;
@@ -20,7 +20,7 @@ class _TransactionsViewState extends State<TransactionsView> {
   static const bgDark = Color(0xFF101722);
 
   late List<Transaction> _all;
-  late final TransactionService _svc;
+  late final TransactionService _service;
 
   _TxFilter _filter = _TxFilter.all;
   String _query = '';
@@ -31,14 +31,14 @@ class _TransactionsViewState extends State<TransactionsView> {
   void initState() {
     super.initState();
     _all = widget.items.isNotEmpty ? widget.items : [];
-    _svc = TransactionService(baseUrl: 'https://kaia.loophole.site', resourcePath: '/transactions');
+    _service = TransactionService();
     _loadFromApi();
   }
 
   Future<void> _loadFromApi() async {
     setState(() => _loading = true);
     try {
-      final list = await _svc.list(query: _query.trim().isEmpty ? null : _query.trim());
+      final list = await _service.getAll();
       setState(() => _all = list);
     } catch (e) {
       // fallback opcional
@@ -273,8 +273,8 @@ class _TransactionsViewState extends State<TransactionsView> {
               _kv('Conta', t.payerAccount),
               _kv('Gateway Ref', t.gatewayRef),
               _kv('Transaction ID', t.transactionId),
-              _kv('Criado em', _dt(t.createdAt, withTime: true)),
-              _kv('Atualizado em', t.updatedAt == null ? '-' : _dt(t.updatedAt!, withTime: true)),
+              // _kv('Criado em', _dt(t.createdAt, withTime: true)),
+              // _kv('Atualizado em', t.updatedAt == null ? '-' : _dt(t.updatedAt!, withTime: true)),
               const SizedBox(height: 14),
               Row(children: [
                 Expanded(child: _pillBtn(icon: Icons.copy, text: 'Copiar ID', onTap: () {})),
@@ -377,8 +377,8 @@ class _TransactionsViewState extends State<TransactionsView> {
         gatewayRef: '123456789',
         transactionId: '456789123',
         amount: 150.00,
-        createdAt: DateTime(now.year, now.month, now.day, 14, 30),
-        updatedAt: DateTime(now.year, now.month, now.day, 14, 31),
+        // createdAt: DateTime(now.year, now.month, now.day, 14, 30),
+        // updatedAt: DateTime(now.year, now.month, now.day, 14, 31),
       ),
       Transaction(
         id: 2,
@@ -388,8 +388,8 @@ class _TransactionsViewState extends State<TransactionsView> {
         gatewayRef: '456789111',
         transactionId: '789222333',
         amount: 75.50,
-        createdAt: DateTime(now.year, now.month, now.day, 12, 15),
-        updatedAt: null,
+        // createdAt: DateTime(now.year, now.month, now.day, 12, 15),
+        // updatedAt: null,
       ),
       Transaction(
         id: 3,
@@ -399,8 +399,8 @@ class _TransactionsViewState extends State<TransactionsView> {
         gatewayRef: '789000999',
         transactionId: '123000111',
         amount: 2300.00,
-        createdAt: DateTime(now.year, now.month, now.day - 1, 23, 59),
-        updatedAt: DateTime(now.year, now.month, now.day - 1, 23, 59, 50),
+        // createdAt: DateTime(now.year, now.month, now.day - 1, 23, 59),
+        // updatedAt: DateTime(now.year, now.month, now.day - 1, 23, 59, 50),
       ),
       Transaction(
         id: 4,
@@ -410,8 +410,8 @@ class _TransactionsViewState extends State<TransactionsView> {
         gatewayRef: '555000111',
         transactionId: '111222333',
         amount: 99.90,
-        createdAt: DateTime(now.year, now.month, now.day - 2, 10, 0),
-        updatedAt: DateTime(now.year, now.month, now.day - 2, 11, 0),
+        // createdAt: DateTime(now.year, now.month, now.day - 2, 10, 0),
+        // updatedAt: DateTime(now.year, now.month, now.day - 2, 11, 0),
       ),
     ];
   }

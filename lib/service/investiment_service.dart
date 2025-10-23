@@ -1,82 +1,163 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:kaia_app/utils/token_manager.dart';
 import '../model/investment.dart';
+import 'api_client.dart';
 
 class InvestmentService {
-  final String baseUrl;       // ex: http://localhost:8080
-  final String resourcePath;  // ex: /api/investments
-  String? _bearer;
+  final Dio _dio = ApiClient.dio;
+  final String resourcePath;
 
-  InvestmentService({
-    required this.baseUrl,
-    this.resourcePath = '/investments',
-  });
+  InvestmentService({this.resourcePath = "/investments/"});
 
-  void setAuthToken(String? token) => _bearer = token;
-
-  Map<String, String> _headers() => {
-        'Content-Type': 'application/json; charset=utf-8',
-        if (_bearer != null && _bearer!.isNotEmpty) 'Authorization': 'Bearer $_bearer',
-      };
-
-  Uri _u([String suffix = '', Map<String, dynamic>? q]) {
-    final qp = <String, String>{};
-    q?.forEach((k, v) {
-      if (v != null) qp[k] = v.toString();
-    });
-    return Uri.parse('$baseUrl$resourcePath$suffix')
-        .replace(queryParameters: qp.isEmpty ? null : qp);
-  }
-
-  Future<List<Investment>> list({String? query, int? limit, int? offset}) async {
-    final res = await http.get(_u('', {
-      if (query != null && query.trim().isNotEmpty) 'q': query,
-      if (limit != null) 'limit': limit,
-      if (offset != null) 'offset': offset,
-    }), headers: _headers());
-
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      final body = json.decode(res.body);
-      final List data = body is List ? body : (body['data'] ?? []);
-      return data.map((e) => Investment.fromBackend(e as Map<String, dynamic>)).toList();
+  /// Cria um novo investimento
+  Future<Investment> createInvestment(Investment inv, {required String token}) async {
+    try {
+      final response = await _dio.post(
+        resourcePath,
+        data: inv.toJson(),
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+      return Investment.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao criar investimento: $msg');
     }
-    throw HttpException('Falha ao listar: ${res.statusCode} ${res.body}');
   }
 
-  Future<Investment> getById(int id) async {
-    final res = await http.get(_u('/$id'), headers: _headers());
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      return Investment.fromBackend(json.decode(res.body));
+  /// Busca investimento pelo ID
+  Future<Investment> getById(int id, {required String token}) async {
+    try {
+      final response = await _dio.get(
+        '$resourcePath$id',
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+      return Investment.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao buscar investimento por ID: $msg');
     }
-    throw HttpException('Falha ao obter: ${res.statusCode} ${res.body}');
   }
 
-  Future<Investment> create(Investment inv) async {
-    final res = await http.post(_u(), headers: _headers(), body: json.encode(inv.toBackend()));
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      return Investment.fromBackend(json.decode(res.body));
+  /// Lista todos os investimentos
+  Future<List<Investment>> getAll({int limit = 10, int offset = 0}) async {
+    try {
+      final token = await SesManager.getJWTToken();
+      final response = await _dio.get(
+        resourcePath,
+        queryParameters: {'limit': limit, 'offset': offset},
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+      final data = response.data;
+      if (data is List) {
+        return data.map((e) => Investment.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao listar investimentos: $msg');
     }
-    throw HttpException('Falha ao criar: ${res.statusCode} ${res.body}');
   }
 
-  Future<Investment> update(int id, Investment inv) async {
-    final res = await http.put(_u('/$id'), headers: _headers(), body: json.encode(inv.toBackend()));
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      return Investment.fromBackend(json.decode(res.body));
+  /// Lista investimentos por projeto
+  Future<List<Investment>> getByProjectID(int projectId, {required String token, int limit = 10, int offset = 0}) async {
+    try {
+      final response = await _dio.get(
+        '$resourcePath/project/$projectId',
+        queryParameters: {'limit': limit, 'offset': offset},
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+      final data = response.data;
+      if (data is List) {
+        return data.map((e) => Investment.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao buscar investimentos por projeto: $msg');
     }
-    throw HttpException('Falha ao atualizar: ${res.statusCode} ${res.body}');
   }
 
-  Future<void> delete(int id) async {
-    final res = await http.delete(_u('/$id'), headers: _headers());
-    if (res.statusCode >= 200 && res.statusCode < 300) return;
-    throw HttpException('Falha ao remover: ${res.statusCode} ${res.body}');
+  /// Lista investimentos por investidor
+  Future<List<Investment>> getByInvestorID(int investorId, {required String token, int limit = 10, int offset = 0}) async {
+    try {
+      final response = await _dio.get(
+        '$resourcePath/investor/$investorId',
+        queryParameters: {'limit': limit, 'offset': offset},
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+      final data = response.data;
+      if (data is List) {
+        return data.map((e) => Investment.fromJson(Map<String, dynamic>.from(e))).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao buscar investimentos por investidor: $msg');
+    }
   }
-}
 
-class HttpException implements Exception {
-  final String message;
-  HttpException(this.message);
-  @override
-  String toString() => message;
+  /// Atualiza um investimento pelo ID
+  Future<Investment> updateInvestment(Investment inv, {required String token}) async {
+    if (inv.id == 0) throw Exception('ID do investimento é obrigatório para atualizar');
+
+    try {
+      final response = await _dio.put(
+        '$resourcePath${inv.id}',
+        data: inv.toJson(),
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+      return Investment.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao atualizar investimento: $msg');
+    }
+  }
+
+  /// Deleta um investimento pelo ID
+  Future<void> deleteInvestment(int id, {required String token}) async {
+    try {
+      await _dio.delete(
+        '$resourcePath$id',
+        options: Options(headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+    } on DioException catch (e) {
+      final msg = e.response != null
+          ? 'Status: ${e.response!.statusCode}, Body: ${e.response!.data}'
+          : e.message;
+      throw Exception('Erro ao deletar investimento: $msg');
+    }
+  }
 }
