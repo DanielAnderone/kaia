@@ -36,7 +36,6 @@ export class TransactionService {
       throw new Error(msg);
     }
 
-    // aceita {data: {...}} ou objeto direto
     const payload = body?.data ?? body;
     return transactionFromApi(payload);
   }
@@ -63,6 +62,11 @@ export class TransactionService {
     return arr.map(transactionFromApi);
   }
 
+  /** Alias para compatibilidade com telas antigas */
+  async getAll(): Promise<Transaction[]> {
+    return this.list();
+  }
+
   /** GET /transactions/:id */
   async getById(id: number | string): Promise<Transaction> {
     const uri = `${this.baseUrl}/transactions/${id}`;
@@ -85,3 +89,5 @@ export class TransactionService {
     return transactionFromApi(payload);
   }
 }
+
+export default TransactionService;

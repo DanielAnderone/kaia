@@ -1,19 +1,16 @@
-// src/services/adminSettings.service.ts
-import { api } from '../utils/token.management';
-import { SesManager } from '../utils/token.management';
+// src/service/admin.settings.ts
+import { api, SesManager } from '../utils/token.management';
 import { type AdminSettings } from '../models/model';
 
 export class AdminSettingsService {
-  private base = api.defaults.baseURL ?? 'https://kaia.loophole.site';
-
   /** GET /admin/settings */
-  async fetchAdminSettings(): Promise<AdminSettings> {
+  async load(): Promise<AdminSettings> {
     try {
       const token = await SesManager.getJWTToken();
 
-      // fallback mock quando não há sessão
+      // fallback quando não há sessão
       if (!token) {
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 400));
         return {
           pushNotifications: true,
           emailNotifications: true,
@@ -26,11 +23,10 @@ export class AdminSettingsService {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // aceita {..} ou { data: {..} }
       const body = res.data?.data ?? res.data;
       return body as AdminSettings;
     } catch {
-      // fallback mock
+      // fallback em erro de rede
       return {
         pushNotifications: true,
         emailNotifications: false,
@@ -41,12 +37,12 @@ export class AdminSettingsService {
   }
 
   /** PUT /admin/settings */
-  async updateAdminSettings(settings: AdminSettings): Promise<AdminSettings> {
+  async save(settings: AdminSettings): Promise<AdminSettings> {
     try {
       const token = await SesManager.getJWTToken();
 
       if (!token) {
-        await new Promise((r) => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, 300));
         return settings; // simula persistência local
       }
 
@@ -60,8 +56,10 @@ export class AdminSettingsService {
       const body = res.data?.data ?? res.data;
       return body as AdminSettings;
     } catch {
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 300));
       return settings; // sucesso local em falha de rede
     }
   }
 }
+
+export default AdminSettingsService;

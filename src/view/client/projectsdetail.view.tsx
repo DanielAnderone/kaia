@@ -15,7 +15,7 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import type { Project, Investor } from '../../models/model';
-import { projectImageUrl } from '../../models/model';
+// REMOVIDO: import { projectImageUrl } from '../../models/model';
 import NetImage from '../../widegts/netImage';
 import { InvestorService } from '../../service/investor.service';
 
@@ -24,6 +24,22 @@ const bgLight = '#F6F8F6';
 const bgDark = '#112112';
 
 type Params = { project: Project };
+
+/** === helper local para imagem do projeto === */
+function projectImageUrl(p?: Partial<Project> | any): string {
+  if (!p) return '';
+  // tenta array de imagens
+  const imgs = (p as any).images;
+  if (Array.isArray(imgs) && imgs.length) {
+    const v = imgs[0];
+    const u = typeof v === 'string' ? v : v?.url;
+    if (u) return String(u);
+  }
+  // fallback para campo único
+  if ((p as any).image) return String((p as any).image);
+  // nenhum encontrado
+  return '';
+}
 
 const ProjectDetailsView: React.FC = () => {
   const isDark = useColorScheme() === 'dark';
@@ -60,7 +76,6 @@ const ProjectDetailsView: React.FC = () => {
 
     setLoading(true);
     try {
-      // implemente create() no InvestorService se ainda não existir
       const created = await (svc as any).create?.(payload);
       const investor: Investor = created ?? payload;
 
@@ -118,7 +133,7 @@ const ProjectDetailsView: React.FC = () => {
             <Metric icon="💵" titulo="Mín. investimento" valor={mt(project.minimumInvestment ?? 0)} />
             <Metric icon="📈" titulo="Rentabilidade" valor={`${(project.profitabilityPercent ?? 0).toFixed(0)}%`} />
             <Metric icon="🛡️" titulo="Risco" valor={riskLabel(project.riskLevel ?? '')} />
-            <Metric icon="🗓️" titulo="Período" valor={'' /* mantenha vazio como no Flutter */} />
+            <Metric icon="🗓️" titulo="Período" valor={''} />
             <Metric icon="👛" titulo="Arrecadado" valor={mt(project.investmentAchieved ?? 0)} />
             {project.totalProfit != null && (
               <Metric icon="📊" titulo="Lucro total" valor={mt(project.totalProfit!)} />
@@ -253,10 +268,7 @@ function mt(v: number) {
 }
 
 function hexWithAlpha(hex: string, alpha: number) {
-  // hex #RRGGBB, alpha 0..1
-  const a = Math.round(alpha * 255)
-    .toString(16)
-    .padStart(2, '0');
+  const a = Math.round(alpha * 255).toString(16).padStart(2, '0');
   return `${hex}${a}`;
 }
 

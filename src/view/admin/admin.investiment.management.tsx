@@ -10,8 +10,8 @@ import {
   FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { type Investment } from '@/models';
-import { InvestmentService } from '@/services/investment.service';
+import { type Investment } from '../../models/model';
+import { InvestmentService } from '../../service/investiment.service';
 
 const bg = '#F5F7FA';
 const primaryBtn = '#2A64F2';

@@ -11,28 +11,33 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
-// ajuste estes imports se não usa alias "@"
+// serviços
 import { AuthService } from '../service/auth.service';
 import type { AuthResponse } from '../models/model';
 
+// sessão util  (ajuste o caminho para o arquivo correto)
+import { SesManager, setPayloadFromToken } from '../utils/token.management';
+
 type Props = {
-  apiBaseUrl?: string;                 // padrão igual ao Flutter
-  logoSource?: any;                    // ImageSourcePropType
-  buttonColor?: string;                // cor do botão
+  apiBaseUrl?: string;
+  logoSource?: any;      // ImageSourcePropType
+  buttonColor?: string;
 };
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export const LoginView: React.FC<Props> = ({
-  apiBaseUrl = 'https://kaia.loophole.site',
+  apiBaseUrl,
   logoSource,
   buttonColor = '#22C55E',
 }) => {
   const nav = useNavigation<any>();
-  const auth = useMemo(() => new AuthService(apiBaseUrl), [apiBaseUrl]);
+
+  // decida a base uma vez. Não acesse propriedades privadas do serviço.
+  const serviceBase = apiBaseUrl ?? SesManager.getBaseURL();
+  const auth = useMemo(() => new AuthService(serviceBase), [serviceBase]);
 
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -47,6 +52,12 @@ export const LoginView: React.FC<Props> = ({
     return null;
   };
 
+  const routeForRole = (role?: string) => {
+    const r = String(role || '').toUpperCase();
+    if (r === 'ADMIN') return 'AdminDashboard';
+    return 'InvestorProjects';
+  };
+
   const handleSubmit = async () => {
     const v = validate();
     if (v) {
@@ -56,24 +67,34 @@ export const LoginView: React.FC<Props> = ({
     setErr(null);
     setLoading(true);
     try {
-      const res: AuthResponse = await auth.login({ email: email.trim(), password: pass });
-      // persistência estilo SesManager
-      await AsyncStorage.multiSet([
-        ['auth_token', res.token],
-        ['user_email', res.user.email],
-        ['user_id', String(res.user.id)],
-      ]);
+      const res: AuthResponse = await auth.login({
+        email: email.trim(),
+        password: pass,
+      });
 
-      // navegação por role
-      const role = res.user.role;
-      if (role === 'admin') {
-        nav.reset({ index: 0, routes: [{ name: 'AdminDashboard' }] });
-      } else if (role === 'user') {
-        nav.reset({ index: 0, routes: [{ name: 'InvestorProjects' }] });
+      if (!res?.token) throw new Error('Token não recebido');
+      await SesManager.setJWTToken(res.token);
+
+      if (res.user) {
+        await SesManager.setPayload(res.user as any);
       } else {
-        // fallback
-        nav.reset({ index: 0, routes: [{ name: 'Home' }] });
+        await setPayloadFromToken(res.token);
       }
+
+      const payload = await SesManager.getPayload().catch(() => null as any);
+      const role = payload?.role ?? res.user?.role;
+
+      const displayName =
+        payload?.name ||
+        payload?.fullName ||
+        (res.user as any)?.username ||
+        res.user?.email ||
+        email.trim();
+
+      nav.reset({
+        index: 0,
+        routes: [{ name: routeForRole(role), params: { displayName } }],
+      });
     } catch (e: any) {
       setErr(e?.message || 'Falha ao autenticar');
     } finally {
@@ -102,7 +123,7 @@ export const LoginView: React.FC<Props> = ({
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder="Username"
+              placeholder="Email"
               placeholderTextColor="#000"
               style={styles.input}
               returnKeyType="next"
@@ -115,10 +136,11 @@ export const LoginView: React.FC<Props> = ({
               value={pass}
               onChangeText={setPass}
               secureTextEntry={obscure}
-              placeholder="Password"
+              placeholder="Senha"
               placeholderTextColor="#000"
               style={styles.input}
               returnKeyType="done"
+              onSubmitEditing={handleSubmit}
             />
             <TouchableOpacity onPress={() => setObscure(v => !v)} style={styles.suffixBtn}>
               <Text style={styles.suffixTxt}>{obscure ? '👁️' : '🙈'}</Text>
@@ -128,7 +150,7 @@ export const LoginView: React.FC<Props> = ({
           {/* Forgot */}
           <View style={styles.right}>
             <TouchableOpacity onPress={() => nav.navigate('Forgot')}>
-              <Text style={styles.linkText}>Forgot your password ?</Text>
+              <Text style={styles.linkText}>Esqueceu a senha?</Text>
             </TouchableOpacity>
           </View>
 
@@ -141,14 +163,21 @@ export const LoginView: React.FC<Props> = ({
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>LOGIN</Text>
+              <Text style={styles.btnText}>ENTRAR</Text>
             )}
           </TouchableOpacity>
 
           {/* Sign up */}
           <View style={styles.right}>
-            <TouchableOpacity onPress={() => nav.navigate('SignUp', { apiBaseUrl, buttonColor })}>
-              <Text style={[styles.signup, { color: buttonColor }]}>SIGN UP</Text>
+            <TouchableOpacity
+              onPress={() =>
+                nav.navigate('SignUp', {
+                  apiBaseUrl: serviceBase, // NÃO usa auth.baseUrl privado
+                  buttonColor,
+                })
+              }
+            >
+              <Text style={[styles.signup, { color: buttonColor }]}>CRIAR CONTA</Text>
             </TouchableOpacity>
           </View>
 
@@ -172,7 +201,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   logo: { height: 56, width: 200, marginBottom: 24 },
   logoFallback: { fontSize: 48, color: '#000', marginBottom: 24 },
-  form: { width: 320 },
+  form: { width: 320, maxWidth: '92%' },
   underlineWrap: {
     borderBottomWidth: StyleSheet.hairlineWidth * 2,
     borderBottomColor: '#000',

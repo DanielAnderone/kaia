@@ -11,8 +11,8 @@ import {
   Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { AdminSettings } from '@/models';
-import { AdminSettingsService } from '@/services/admin-settings.service';
+import { AdminSettings } from '../../models/model';
+import { AdminSettingsService } from '../../service/admin.settings';
 
 const AdminSettingsView: React.FC = () => {
   const nav = useNavigation<any>();

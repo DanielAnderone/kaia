@@ -1,4 +1,3 @@
-
 /* Helpers */
 const toInt = (v: unknown, d = 0) =>
   typeof v === 'number' ? Math.trunc(v) : Number.parseInt(String(v ?? ''), 10) || d;
@@ -237,8 +236,8 @@ export type Transaction = {
   paymentId: number;
   investorId: number;
   payerAccount: string;
-  gatewayRef: string;      // pode vir número no JSON
-  transactionId: string;   // pode vir número no JSON
+  gatewayRef: string;
+  transactionId: string;
   amount: number;
 };
 
@@ -292,11 +291,22 @@ export const projectFromApi = (j: any): Project => ({
   description: j?.description == null ? null : toStr(j?.description),
   startDate: toDate(j?.start_date),
   endDate: toDate(j?.end_date),
-  profitabilityPercent: toNum(j?.profitability_percent),
-  minimumInvestment: toNum(j?.minimum_investment),
+  profitabilityPercent: toNum(j?.profitability_percent ?? j?.profitabilityPercent),
+  minimumInvestment: toNum(j?.minimum_investment ?? j?.minimumInvestment),
   riskLevel: j?.risk_level == null ? null : toStr(j?.risk_level),
   status: j?.status == null ? null : toStr(j?.status),
-  mediaPath: j?.media_path == null ? null : toStr(j?.media_path),
+  // aceita múltiplos campos possíveis do backend
+  mediaPath:
+    j?.media_path ??
+    j?.mediaPath ??
+    j?.image_url ??
+    j?.imageUrl ??
+    j?.media_url ??
+    j?.mediaUrl ??
+    j?.image ??
+    j?.photo ??
+    j?.file ??
+    null,
   investmentAchieved:
     j?.investment_achieved == null ? null : toNum(j?.investment_achieved),
   totalProfit: j?.total_profit == null ? null : toNum(j?.total_profit),
@@ -321,12 +331,9 @@ export const projectToApi = (m: Project) => ({
   updated_at: iso(m.updatedAt ?? undefined),
 });
 
-
- // ATIVIDADE RECENTE
-
+/* ATIVIDADE RECENTE */
 export type RecentActivity = {
   icon: string;
   description: string;
   timeAgo: string;
 };
-

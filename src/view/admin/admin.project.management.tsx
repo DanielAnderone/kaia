@@ -11,7 +11,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
-import { launchImageLibrary, ImageLibraryOptions, Asset } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { type Project } from '../../models/model';
 import { ProjectService } from '../../service/project.service';
@@ -37,7 +37,7 @@ const AdminProjectManagementView: React.FC = () => {
   const [status, setStatus] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<string | null>(null); // YYYY-MM-DD
   const [endDate, setEndDate] = useState<string | null>(null);
-  const [image, setImage] = useState<Asset | null>(null);
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -57,9 +57,17 @@ const AdminProjectManagementView: React.FC = () => {
   };
 
   const pickImage = async () => {
-    const opts: ImageLibraryOptions = { mediaType: 'photo', selectionLimit: 1, quality: 0.8 };
-    const res = await launchImageLibrary(opts);
-    if (res.assets && res.assets.length > 0) setImage(res.assets[0]);
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão', 'Permita acesso às fotos.');
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: false,
+      quality: 0.8,
+    });
+    if (!res.canceled) setImage(res.assets[0]);
   };
 
   const parsePos = (s: string) => {
@@ -96,7 +104,7 @@ const AdminProjectManagementView: React.FC = () => {
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null,
       profitabilityPercent: 0,
-      mediaPath: '', // será enviado via multipart
+      mediaPath: '',
     };
 
     setSaving(true);
@@ -107,7 +115,6 @@ const AdminProjectManagementView: React.FC = () => {
       } else {
         created = await svc.addProject(p);
       }
-      // limpa e recarrega
       clearForm();
       await load();
       Alert.alert('Sucesso', 'Projeto salvo com sucesso.');
@@ -339,7 +346,6 @@ const ProjectCard: React.FC<{ p: Project; onDelete: () => void }> = ({ p, onDele
   };
   return (
     <View style={s.cardItem}>
-      {/* imagem */}
       {p.mediaPath ? (
         <Image source={{ uri: String(p.mediaPath) }} style={s.cardImg} />
       ) : (
@@ -350,7 +356,6 @@ const ProjectCard: React.FC<{ p: Project; onDelete: () => void }> = ({ p, onDele
 
       <View style={{ height: 12 }} />
 
-      {/* header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
         <Text style={s.cardTitleSm}>#{p.id ?? '-'}</Text>
         <View style={[s.badge, { backgroundColor: hexWithAlpha(statusColor(p.status), 0.12) }]}>
@@ -363,7 +368,6 @@ const ProjectCard: React.FC<{ p: Project; onDelete: () => void }> = ({ p, onDele
 
       <View style={{ height: 12 }} />
 
-      {/* grid info */}
       <View style={s.grid2}>
         <SmallInfo label="Budget & ROI" value={`${fmtMt(p.totalProfit ?? 0)} / ${(p.profitabilityPercent ?? 0).toFixed(1)}%`} />
         <SmallInfo label="Risco" value={p.riskLevel ?? '-'} valueColor={p.riskLevel === 'Baixo' ? '#16A34A' : p.riskLevel === 'Médio' ? '#EA580C' : '#DC2626'} />

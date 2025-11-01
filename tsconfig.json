@@ -1,8 +1,21 @@
 {
-  "extends": "@react-native/typescript-config",
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "types": ["node", "react", "react-native"]
+    "jsx": "react-jsx",
+    "target": "ES2020",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["react", "react-native"],
+    "lib": ["ES2021", "DOM"]
   },
-  "include": ["**/*.ts", "**/*.tsx", "src/types/*.d.ts"],
-  "exclude": ["**/node_modules", "**/Pods"]
+  "include": ["index.ts", "index.tsx", "App.tsx", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "**/Pods"]
 }

@@ -13,7 +13,6 @@ import {
   useColorScheme,
 } from 'react-native';
 
-// ajuste estes imports para o teu projeto
 import type { Investment } from '../../models/model';
 import { AppBottomNav, AppTab } from '../../widegts/app.bottom';
 import { InvestmentService } from '../../service/investiment.service';
@@ -38,7 +37,6 @@ const InvestmentsView: React.FC<Props> = ({ projectNameOf, investments = [] }) =
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // modal
   const [sel, setSel] = useState<Investment | null>(null);
   const [selTitle, setSelTitle] = useState('');
 
@@ -52,7 +50,7 @@ const InvestmentsView: React.FC<Props> = ({ projectNameOf, investments = [] }) =
     try {
       const list = await service.getAll();
       setItems(list);
-    } catch (e) {
+    } catch {
       setItems(mock());
     } finally {
       setLoading(false);
@@ -82,16 +80,12 @@ const InvestmentsView: React.FC<Props> = ({ projectNameOf, investments = [] }) =
   return (
     <View style={{ flex: 1, backgroundColor: isDark ? bgDark : bgLight }}>
       <View style={[s.appbar, { backgroundColor: isDark ? bgDark : bgLight }]}>
-        <TouchableOpacity onPress={() => (/* nav.goBack() se quiser */ null)}>
+        <TouchableOpacity onPress={() => null}>
           <Text style={{ color: isDark ? '#fff' : '#111', fontSize: 18 }}>{'‹'}</Text>
         </TouchableOpacity>
         <Text style={[s.title, { color: isDark ? '#fff' : '#111' }]}>Meus Investimentos</Text>
         <TouchableOpacity disabled={loading} onPress={loadFromApi}>
-          {loading ? (
-            <Text style={{ color: primary }}>⟳</Text>
-          ) : (
-            <Text style={{ color: isDark ? '#fff' : '#111' }}>⟳</Text>
-          )}
+          <Text style={{ color: loading ? primary : isDark ? '#fff' : '#111' }}>⟳</Text>
         </TouchableOpacity>
       </View>
 
@@ -106,11 +100,7 @@ const InvestmentsView: React.FC<Props> = ({ projectNameOf, investments = [] }) =
               placeholder="Pesquisar investimentos"
               placeholderTextColor="#6B7280"
               value={query}
-              onChangeText={t => {
-                setQuery(t);
-                // se quiser refetch a cada digitação como Flutter:
-                // loadFromApi();
-              }}
+              onChangeText={setQuery}
               style={s.search}
             />
           </View>
@@ -239,6 +229,12 @@ const InvestmentsView: React.FC<Props> = ({ projectNameOf, investments = [] }) =
 
 /* ===== widgets ===== */
 
+const Empty: React.FC<{ message: string }> = ({ message }) => (
+  <View style={{ padding: 24, alignItems: 'center' }}>
+    <Text style={{ color: '#6B7280' }}>{message}</Text>
+  </View>
+);
+
 const SummaryCard: React.FC<{ title: string; value: string }> = ({ title, value }) => (
   <View style={s.card}>
     <Text style={s.cardTitle}>{title}</Text>
@@ -302,10 +298,7 @@ function mt(v: number) {
   for (let i = s.length - 1; i >= 0; i--) {
     out = s[i] + out;
     c++;
-    if (c === 3 && i !== 0) {
-      out = '.' + out;
-      c = 0;
-    }
+    if (c === 3 && i !== 0) { out = '.' + out; c = 0; }
   }
   return `MT ${out}`;
 }
@@ -319,40 +312,22 @@ function mock(): Investment[] {
   const now = new Date();
   return [
     {
-      id: 1,
-      projectId: 101,
-      investorId: 1,
-      investedAmount: 5000,
-      applicationDate: new Date(now.getFullYear(), 5, 15),
-      estimatedProfit: 1250,
-      actualProfit: 0,
-      note: 'Lote 12',
-      createdAt: new Date(now.getFullYear(), 5, 15),
-      updatedAt: null,
+      id: 1, projectId: 101, investorId: 1,
+      investedAmount: 5000, applicationDate: new Date(now.getFullYear(), 5, 15),
+      estimatedProfit: 1250, actualProfit: 0, note: 'Lote 12',
+      createdAt: new Date(now.getFullYear(), 5, 15), updatedAt: null,
     } as any,
     {
-      id: 2,
-      projectId: 102,
-      investorId: 1,
-      investedAmount: 3000,
-      applicationDate: new Date(now.getFullYear(), 4, 20),
-      estimatedProfit: 750,
-      actualProfit: 0,
-      note: 'Lote 08',
-      createdAt: new Date(now.getFullYear(), 4, 20),
-      updatedAt: null,
+      id: 2, projectId: 102, investorId: 1,
+      investedAmount: 3000, applicationDate: new Date(now.getFullYear(), 4, 20),
+      estimatedProfit: 750, actualProfit: 0, note: 'Lote 08',
+      createdAt: new Date(now.getFullYear(), 4, 20), updatedAt: null,
     } as any,
     {
-      id: 3,
-      projectId: 103,
-      investorId: 1,
-      investedAmount: 10000,
-      applicationDate: new Date(now.getFullYear(), 3, 10),
-      estimatedProfit: 0,
-      actualProfit: 2800,
-      note: 'Lote 05',
-      createdAt: new Date(now.getFullYear(), 3, 10),
-      updatedAt: new Date(now.getFullYear(), 8, 30),
+      id: 3, projectId: 103, investorId: 1,
+      investedAmount: 10000, applicationDate: new Date(now.getFullYear(), 3, 10),
+      estimatedProfit: 0, actualProfit: 2800, note: 'Lote 05',
+      createdAt: new Date(now.getFullYear(), 3, 10), updatedAt: new Date(now.getFullYear(), 8, 30),
     } as any,
   ];
 }

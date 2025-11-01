@@ -1,4 +1,12 @@
 {
-  "name": "kaia_mult",
-  "displayName": "kaia_mult"
+  "expo": {
+    "name": "kaia_mult",
+    "slug": "kaia_mult",
+    "scheme": "kaia",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "ios": { "supportsTablet": true },
+    "android": { "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#FFFFFF" } },
+    "web": { "bundler": "metro" }
+  }
 }
